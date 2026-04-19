@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SYSTEM ARMED - STEP VERIFICATION</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800;900&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary": "#591800",
+                        "secondary": "#eaea00",
+                        "on-secondary-fixed": "#424200",
+                        "on-error": "#490006",
+                        "on-secondary": "#555500",
+                        "on-tertiary-container": "#005a10",
+                        "surface-container-low": "#131313",
+                        "surface-container": "#1a1a1a",
+                        "primary-fixed": "#ff7948",
+                        "on-tertiary-fixed": "#00440a",
+                        "on-secondary-container": "#ffff60",
+                        "on-primary-fixed": "#000000",
+                        "on-primary-fixed-variant": "#551600",
+                        "background": "#0e0e0e",
+                        "on-surface-variant": "#adaaaa",
+                        "outline": "#767575",
+                        "secondary-container": "#626200",
+                        "on-background": "#ffffff",
+                        "tertiary-container": "#00fc40",
+                        "tertiary-dim": "#00ec3b",
+                        "on-surface": "#ffffff",
+                        "on-error-container": "#ffa8a3",
+                        "secondary-fixed": "#eaea00",
+                        "outline-variant": "#484847",
+                        "surface-dim": "#0e0e0e",
+                        "surface-container-highest": "#262626",
+                        "primary": "#ff9069",
+                        "inverse-on-surface": "#565555",
+                        "on-tertiary-fixed-variant": "#006513",
+                        "error-dim": "#d7383b",
+                        "surface-container-high": "#20201f",
+                        "error": "#ff716c",
+                        "tertiary-fixed": "#00fc40",
+                        "on-tertiary": "#006413",
+                        "inverse-primary": "#ac3600",
+                        "inverse-surface": "#fcf9f8",
+                        "primary-dim": "#ff7441",
+                        "tertiary": "#9cff93",
+                        "secondary-dim": "#dbdb00",
+                        "on-secondary-fixed-variant": "#5f5f00",
+                        "surface-container-lowest": "#000000",
+                        "surface-variant": "#262626",
+                        "primary-container": "#ff7948",
+                        "surface-tint": "#ff9069",
+                        "secondary-fixed-dim": "#dbdb00",
+                        "surface-bright": "#2c2c2c",
+                        "on-primary-container": "#451000",
+                        "error-container": "#9f0519",
+                        "surface": "#0e0e0e",
+                        "tertiary-fixed-dim": "#00ec3b",
+                        "primary-fixed-dim": "#fe5e1e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0px",
+                        "lg": "0px",
+                        "xl": "0px",
+                        "full": "0px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Space Grotesk"]
+                    }
+                }
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+        }
+        body {
+            background-color: #0e0e0e;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+        }
+        .space-grotesk { font-family: 'Space Grotesk', sans-serif; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="w-full top-0 left-0 bg-[#0e0e0e] flex justify-between items-center px-6 h-16 w-full z-50">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#fe5e1e]" data-icon="sensors">sensors</span>
+<h1 class="font-['Space_Grotesk'] uppercase tracking-tighter font-bold text-[#fe5e1e] text-xl">SYSTEM ARMED</h1>
+</div>
+<div class="flex items-center gap-4">
+<div class="bg-[#1a1a1a] px-3 py-1 text-[10px] font-['Space_Grotesk'] font-bold text-secondary border-l-2 border-secondary">
+                VERIFICATION MODE
+            </div>
+</div>
+</header>
+<!-- Main Content: Task Verification Canvas -->
+<main class="flex-grow flex flex-col p-6 max-w-4xl mx-auto w-full pb-24">
+<!-- Urgency Header -->
+<div class="mb-12">
+<p class="font-['Space_Grotesk'] text-secondary uppercase text-sm tracking-widest font-bold mb-2">ACTIVE PROTOCOL: STEP_TASK_04</p>
+<h2 class="font-['Space_Grotesk'] text-6xl md:text-8xl font-black uppercase tracking-tighter leading-none">
+                DEACTIVATE <br/> <span class="text-primary-fixed-dim">OR ALERT</span>
+</h2>
+</div>
+<!-- The Industrial Step Counter (Tactile Brutalism) -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-0 bg-surface-container-lowest border-l-4 border-primary-fixed-dim">
+<!-- Counter Display -->
+<div class="md:col-span-8 p-8 flex flex-col justify-center bg-surface-container">
+<div class="flex items-baseline gap-2 mb-4">
+<span class="font-['Space_Grotesk'] text-9xl font-black text-on-surface leading-none tracking-tighter">14</span>
+<span class="font-['Space_Grotesk'] text-4xl font-bold text-outline-variant">/ 50</span>
+</div>
+<p class="font-['Space_Grotesk'] uppercase text-xl font-bold tracking-widest text-primary">STEPS DETECTED</p>
+</div>
+<!-- Status Indicator Side Block -->
+<div class="md:col-span-4 p-8 bg-surface-container-highest flex flex-col justify-between border-l border-outline-variant/15">
+<div>
+<span class="material-symbols-outlined text-4xl text-secondary mb-4" data-icon="directions_run">directions_run</span>
+<p class="font-['Inter'] text-sm text-on-surface-variant leading-relaxed">
+                        HEART RATE: 112 BPM<br/>
+                        MOTION: CALIBRATED<br/>
+                        LOCK STATE: <span class="text-error font-bold">ENGAGED</span>
+</p>
+</div>
+<div class="mt-8">
+<div class="h-1 w-full bg-outline-variant/30 mb-2"></div>
+<p class="font-['Space_Grotesk'] text-[10px] uppercase font-bold text-outline">Sensor telemetry active</p>
+</div>
+</div>
+</div>
+<!-- Urgency Meter (Custom Component) -->
+<div class="mt-12 space-y-4">
+<div class="flex justify-between items-end">
+<span class="font-['Space_Grotesk'] text-xs font-bold uppercase tracking-widest text-on-surface-variant">Progress to Deactivation</span>
+<span class="font-['Space_Grotesk'] text-2xl font-black text-secondary">28%</span>
+</div>
+<!-- Segmented Progress Bar -->
+<div class="h-6 w-full flex gap-1">
+<!-- Completed Segments (Secondary Yellow) -->
+<div class="h-full w-full bg-secondary"></div>
+<div class="h-full w-full bg-secondary"></div>
+<div class="h-full w-full bg-secondary"></div>
+<div class="h-full w-full bg-secondary"></div>
+<div class="h-full w-full bg-secondary/40"></div>
+<!-- Remaining Segments (Dark Surface) -->
+<div class="h-full w-full bg-surface-container-highest"></div>
+<div class="h-full w-full bg-surface-container-highest"></div>
+<div class="h-full w-full bg-surface-container-highest"></div>
+<div class="h-full w-full bg-surface-container-highest"></div>
+<div class="h-full w-full bg-surface-container-highest"></div>
+<div class="h-full w-full bg-surface-container-highest"></div>
+<div class="h-full w-full bg-surface-container-highest"></div>
+<div class="h-full w-full bg-surface-container-highest"></div>
+<div class="h-full w-full bg-surface-container-highest"></div>
+</div>
+</div>
+<!-- Interactive Action Grid -->
+<div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Instruction Plate -->
+<div class="bg-surface-container-low p-6 flex items-start gap-4 border-t-2 border-outline-variant">
+<span class="material-symbols-outlined text-primary-fixed-dim" data-icon="info">info</span>
+<div>
+<h3 class="font-['Space_Grotesk'] font-bold uppercase text-sm mb-1">Movement Required</h3>
+<p class="text-xs text-on-surface-variant leading-normal">
+                        Device must remain in hand or pocket. Sudden stops will reset the current cadence buffer.
+                    </p>
+</div>
+</div>
+<!-- Emergency Bypass (Locked State) -->
+<button class="bg-surface-container-highest text-outline p-6 flex items-center justify-between cursor-not-allowed group transition-colors">
+<div class="text-left">
+<h3 class="font-['Space_Grotesk'] font-bold uppercase text-sm mb-1">Bypass Sequence</h3>
+<p class="text-[10px] uppercase tracking-tighter">Requires 2FA Authorization</p>
+</div>
+<span class="material-symbols-outlined" data-icon="lock">lock</span>
+</button>
+</div>
+<!-- Visual Background Decoration -->
+<div class="fixed top-1/2 -right-20 -translate-y-1/2 rotate-90 pointer-events-none opacity-5">
+<h1 class="font-['Space_Grotesk'] text-[240px] font-black leading-none select-none">MOVE</h1>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center bg-[#0e0e0e] border-t border-[#484847]/15">
+<!-- Alarm Tab (Active) -->
+<button class="flex flex-col items-center justify-center text-[#fe5e1e] border-t-4 border-[#eaea00] p-4 transition-transform duration-150 active:scale-95">
+<span class="material-symbols-outlined" data-icon="alarm" style="font-variation-settings: 'FILL' 1;">alarm</span>
+<span class="font-['Space_Grotesk'] uppercase text-[10px] font-bold mt-1">ALARM</span>
+</button>
+<!-- Add Box -->
+<button class="flex flex-col items-center justify-center text-[#484847] p-4 hover:text-[#ff9069] transition-transform duration-150 active:scale-95">
+<span class="material-symbols-outlined" data-icon="add_box">add_box</span>
+<span class="font-['Space_Grotesk'] uppercase text-[10px] font-bold mt-1">NEW</span>
+</button>
+<!-- Analytics -->
+<button class="flex flex-col items-center justify-center text-[#484847] p-4 hover:text-[#ff9069] transition-transform duration-150 active:scale-95">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-['Space_Grotesk'] uppercase text-[10px] font-bold mt-1">STATS</span>
+</button>
+<!-- Settings -->
+<button class="flex flex-col items-center justify-center text-[#484847] p-4 hover:text-[#ff9069] transition-transform duration-150 active:scale-95">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-['Space_Grotesk'] uppercase text-[10px] font-bold mt-1">SYSTEM</span>
+</button>
+</nav>
+<!-- Visual Glow Effect -->
+<div class="fixed inset-0 pointer-events-none" style="background: radial-gradient(circle at 50% 50%, rgba(254, 94, 30, 0.05) 0%, transparent 70%);">
+</div>
+</body></html>

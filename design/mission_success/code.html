@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800;900&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed-variant": "#5f5f00",
+                        "surface-container-lowest": "#000000",
+                        "tertiary": "#9cff93",
+                        "secondary-dim": "#dbdb00",
+                        "primary-container": "#ff7948",
+                        "surface-variant": "#262626",
+                        "surface-container-high": "#20201f",
+                        "error": "#ff716c",
+                        "tertiary-fixed": "#00fc40",
+                        "primary-dim": "#ff7441",
+                        "inverse-surface": "#fcf9f8",
+                        "on-tertiary": "#006413",
+                        "inverse-primary": "#ac3600",
+                        "surface": "#0e0e0e",
+                        "tertiary-fixed-dim": "#00ec3b",
+                        "primary-fixed-dim": "#fe5e1e",
+                        "secondary-fixed-dim": "#dbdb00",
+                        "surface-tint": "#ff9069",
+                        "error-container": "#9f0519",
+                        "surface-bright": "#2c2c2c",
+                        "on-primary-container": "#451000",
+                        "on-primary-fixed-variant": "#551600",
+                        "on-secondary-container": "#ffff60",
+                        "on-primary-fixed": "#000000",
+                        "secondary-container": "#626200",
+                        "on-background": "#ffffff",
+                        "background": "#0e0e0e",
+                        "on-surface-variant": "#adaaaa",
+                        "outline": "#767575",
+                        "on-primary": "#591800",
+                        "secondary": "#eaea00",
+                        "on-secondary-fixed": "#424200",
+                        "on-secondary": "#555500",
+                        "on-error": "#490006",
+                        "surface-container": "#1a1a1a",
+                        "primary-fixed": "#ff7948",
+                        "on-tertiary-fixed": "#00440a",
+                        "on-tertiary-container": "#005a10",
+                        "surface-container-low": "#131313",
+                        "surface-container-highest": "#262626",
+                        "on-tertiary-fixed-variant": "#006513",
+                        "error-dim": "#d7383b",
+                        "primary": "#ff9069",
+                        "inverse-on-surface": "#565555",
+                        "on-surface": "#ffffff",
+                        "tertiary-container": "#00fc40",
+                        "tertiary-dim": "#00ec3b",
+                        "surface-dim": "#0e0e0e",
+                        "outline-variant": "#484847",
+                        "on-error-container": "#ffa8a3",
+                        "secondary-fixed": "#eaea00"
+                    },
+                    "borderRadius": {
+                        "none": "0px",
+                        "DEFAULT": "0px",
+                        "lg": "0px",
+                        "xl": "0px",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Space Grotesk", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Space Grotesk", "sans-serif"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .anodic-gradient {
+            background: linear-gradient(45deg, #fe5e1e 0%, #ff9069 100%);
+        }
+        .atmospheric-glow-tertiary {
+            box-shadow: 0px 0px 30px rgba(156, 255, 147, 0.2);
+        }
+        .ghost-border {
+            outline: 1px solid rgba(72, 72, 71, 0.15);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body selection:bg-tertiary selection:text-on-tertiary">
+<!-- TopAppBar -->
+<nav class="flex justify-between items-center px-6 h-16 w-full top-0 left-0 fixed z-50 bg-[#0e0e0e]">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#fe5e1e]" data-icon="sensors">sensors</span>
+<span class="font-['Space_Grotesk'] uppercase tracking-tighter font-bold text-[#fe5e1e]">SYSTEM ARMED</span>
+</div>
+<div class="text-2xl font-black text-[#fe5e1e] tracking-widest font-['Space_Grotesk']">
+            REVERSE ALARM
+        </div>
+</nav>
+<!-- Main Canvas -->
+<main class="min-h-screen pt-24 pb-32 px-6 flex flex-col max-w-2xl mx-auto">
+<!-- Mission Status Header -->
+<header class="mb-12">
+<div class="flex items-baseline gap-2 mb-2">
+<div class="h-4 w-1 bg-tertiary"></div>
+<span class="font-label text-tertiary uppercase text-xs tracking-widest font-bold">Protocol Status: Cleared</span>
+</div>
+<h1 class="font-headline text-5xl md:text-7xl font-black uppercase tracking-tighter leading-none mb-4 italic">
+                MISSION <br/> <span class="text-tertiary">DEPLOYED</span>
+</h1>
+<div class="w-full h-[2px] bg-outline-variant/15 flex">
+<div class="w-full h-full anodic-gradient"></div>
+</div>
+</header>
+<!-- Visual Hero (Tactile Brutalism) -->
+<section class="relative aspect-video mb-12 bg-surface-container-low ghost-border overflow-hidden group">
+<div class="absolute inset-0 z-0">
+<img alt="Mission Background" class="w-full h-full object-cover mix-blend-overlay opacity-40 grayscale group-hover:scale-105 transition-transform duration-[2000ms] ease-out" data-alt="industrial electronic circuit board with glowing neon green indicator lights in a dark high-tech laboratory environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhKYDbfuetFO3XLvxNz0-zfcnibqdfVYC7vYG92FbJO3TbCM1OgyEhyEf4AvzFFy1CqxZFin5aUGM3FuLUaouU5WpUzBNLaWE1orleIel76xSImbPa7CB4Ajxwpja_IKlkSGFgJh1zpwA2aD-i_xZxbgf9JLfDuoao9H8PeKdk4XwXg_gMCIK2sHJ5JeAVXBs7AvEVZjeDbYSoSnWJrnvVi6lr2ynghrC-fWvSJSRjBEpKUV4MvEDgWmQGOvX8YztfyeXbKYsFRgxA"/>
+</div>
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="text-center">
+<span class="material-symbols-outlined text-tertiary text-8xl atmospheric-glow-tertiary" data-icon="task_alt" style="font-variation-settings: 'FILL' 1;">task_alt</span>
+<p class="font-headline text-on-surface-variant uppercase mt-4 tracking-widest text-sm">Target neutralized</p>
+</div>
+</div>
+<!-- Data Overlays -->
+<div class="absolute top-4 left-4 bg-surface/80 backdrop-blur-md px-3 py-1 font-label text-[10px] uppercase text-tertiary">
+                System: Stable
+            </div>
+<div class="absolute bottom-4 right-4 bg-surface/80 backdrop-blur-md px-3 py-1 font-label text-[10px] uppercase text-on-surface-variant">
+                Lat: 40.7128° N / Lon: 74.0060° W
+            </div>
+</section>
+<!-- Performance Metrics Bento Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
+<!-- Metric 1 -->
+<div class="bg-surface-container-low p-6 flex flex-col justify-between h-40 group hover:bg-surface-container transition-colors duration-150">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-tertiary" data-icon="schedule">schedule</span>
+<span class="font-label text-[10px] text-outline uppercase font-bold">Latency</span>
+</div>
+<div>
+<p class="font-headline text-3xl font-black uppercase text-on-surface">04:22</p>
+<p class="font-label text-[10px] text-tertiary uppercase font-bold">TIME TO WAKE</p>
+</div>
+</div>
+<!-- Metric 2 -->
+<div class="bg-surface-container-low p-6 flex flex-col justify-between h-40 group hover:bg-surface-container transition-colors duration-150">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-tertiary" data-icon="footprint">footprint</span>
+<span class="font-label text-[10px] text-outline uppercase font-bold">Bio-Data</span>
+</div>
+<div>
+<p class="font-headline text-3xl font-black uppercase text-on-surface">50</p>
+<p class="font-label text-[10px] text-tertiary uppercase font-bold">STEPS</p>
+</div>
+</div>
+<!-- Metric 3 (Full Width) -->
+<div class="md:col-span-2 bg-surface-container-highest p-6 flex items-center justify-between group hover:bg-surface-bright transition-colors duration-150">
+<div class="flex items-center gap-6">
+<span class="material-symbols-outlined text-tertiary text-4xl" data-icon="record_voice_over">record_voice_over</span>
+<div>
+<p class="font-headline text-4xl font-black uppercase text-on-surface">98%</p>
+<p class="font-label text-[10px] text-tertiary uppercase font-bold tracking-widest">VOICE ACCURACY</p>
+</div>
+</div>
+<!-- Segmented Urgency Meter used as Success Meter -->
+<div class="hidden sm:flex gap-1 h-6 items-end">
+<div class="w-2 h-2 bg-tertiary"></div>
+<div class="w-2 h-3 bg-tertiary"></div>
+<div class="w-2 h-4 bg-tertiary"></div>
+<div class="w-2 h-5 bg-tertiary"></div>
+<div class="w-2 h-6 bg-tertiary"></div>
+<div class="w-2 h-5 bg-tertiary/40"></div>
+</div>
+</div>
+</section>
+<!-- Summary text -->
+<article class="mb-12 border-l-4 border-tertiary pl-6 py-2 bg-surface-container-low/30">
+<p class="font-body text-on-surface-variant text-sm leading-relaxed max-w-prose">
+                Reverse alert sequence terminated successfully. All biological triggers were met within the high-performance window. Your neural response time today is in the <span class="text-tertiary font-bold">top 5%</span> of your current cohort. 
+            </p>
+</article>
+<!-- Action Section -->
+<footer class="mt-auto">
+<button class="w-full anodic-gradient text-on-primary-fixed py-6 px-8 flex justify-between items-center group active:scale-[0.98] transition-transform duration-150">
+<span class="font-headline text-2xl font-black uppercase tracking-tight">DISMISS SYSTEM</span>
+<span class="material-symbols-outlined text-4xl group-hover:translate-x-2 transition-transform" data-icon="power_settings_new">power_settings_new</span>
+</button>
+<div class="mt-4 flex justify-between items-center px-2">
+<span class="font-label text-[10px] text-outline uppercase">Logged at 06:44:02 AM</span>
+<button class="font-label text-[10px] text-tertiary uppercase font-bold hover:underline">View Historical Logs</button>
+</div>
+</footer>
+</main>
+<!-- BottomNavBar (Suppressed for focused Transactional State but technically available if needed - here we only show it as a shell hint if user needs to exit) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center bg-[#0e0e0e] border-t border-[#484847]/15">
+<div class="flex flex-col items-center justify-center text-[#fe5e1e] border-t-4 border-[#eaea00] p-4 group cursor-pointer transition-transform duration-150 active:scale-95">
+<span class="material-symbols-outlined" data-icon="alarm">alarm</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#484847] p-4 group cursor-pointer hover:text-[#ff9069] transition-transform duration-150 active:scale-95">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#484847] p-4 group cursor-pointer hover:text-[#ff9069] transition-transform duration-150 active:scale-95">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</div>
+</nav>
+</body></html>

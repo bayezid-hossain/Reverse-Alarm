@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SYSTEM SETTINGS | REVERSE ALARM</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;900&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed-variant": "#5f5f00",
+                        "surface-container-lowest": "#000000",
+                        "tertiary": "#9cff93",
+                        "secondary-dim": "#dbdb00",
+                        "primary-container": "#ff7948",
+                        "surface-variant": "#262626",
+                        "surface-container-high": "#20201f",
+                        "error": "#ff716c",
+                        "tertiary-fixed": "#00fc40",
+                        "primary-dim": "#ff7441",
+                        "inverse-surface": "#fcf9f8",
+                        "on-tertiary": "#006413",
+                        "inverse-primary": "#ac3600",
+                        "surface": "#0e0e0e",
+                        "tertiary-fixed-dim": "#00ec3b",
+                        "primary-fixed-dim": "#fe5e1e",
+                        "secondary-fixed-dim": "#dbdb00",
+                        "surface-tint": "#ff9069",
+                        "error-container": "#9f0519",
+                        "surface-bright": "#2c2c2c",
+                        "on-primary-container": "#451000",
+                        "on-primary-fixed-variant": "#551600",
+                        "on-secondary-container": "#ffff60",
+                        "on-primary-fixed": "#000000",
+                        "secondary-container": "#626200",
+                        "on-background": "#ffffff",
+                        "background": "#0e0e0e",
+                        "on-surface-variant": "#adaaaa",
+                        "outline": "#767575",
+                        "on-primary": "#591800",
+                        "secondary": "#eaea00",
+                        "on-secondary-fixed": "#424200",
+                        "on-secondary": "#555500",
+                        "on-error": "#490006",
+                        "surface-container": "#1a1a1a",
+                        "primary-fixed": "#ff7948",
+                        "on-tertiary-fixed": "#00440a",
+                        "on-tertiary-container": "#005a10",
+                        "surface-container-low": "#131313",
+                        "surface-container-highest": "#262626",
+                        "on-tertiary-fixed-variant": "#006513",
+                        "error-dim": "#d7383b",
+                        "primary": "#ff9069",
+                        "inverse-on-surface": "#565555",
+                        "on-surface": "#ffffff",
+                        "tertiary-container": "#00fc40",
+                        "tertiary-dim": "#00ec3b",
+                        "surface-dim": "#0e0e0e",
+                        "outline-variant": "#484847",
+                        "on-error-container": "#ffa8a3",
+                        "secondary-fixed": "#eaea00"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0px",
+                        "lg": "0px",
+                        "xl": "0px",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Space Grotesk"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        input:focus { outline: none; box-shadow: none; }
+        .anodic-gradient {
+            background: linear-gradient(45deg, #fe5e1e 0%, #ff9069 100%);
+        }
+        .etched-border {
+            outline: 1px solid rgba(72, 72, 71, 0.15);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary selection:text-on-primary">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 bg-[#0e0e0e] flex justify-between items-center px-6 h-16 w-full">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#fe5e1e]" data-icon="sensors">sensors</span>
+<h1 class="font-['Space_Grotesk'] uppercase tracking-tighter font-bold text-2xl text-[#fe5e1e] tracking-widest">SYSTEM ARMED</h1>
+</div>
+<div class="flex items-center gap-6">
+<button class="hover:bg-[#262626] transition-colors duration-150 p-2">
+<span class="material-symbols-outlined text-[#484847]" data-icon="terminal">terminal</span>
+</button>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-4xl mx-auto space-y-12">
+<!-- Header Section -->
+<section class="space-y-2">
+<div class="flex items-baseline gap-4">
+<span class="text-secondary font-headline font-black text-5xl">03</span>
+<h2 class="font-headline font-bold text-4xl uppercase tracking-tighter">CONFIGURATION</h2>
+</div>
+<div class="h-1 w-24 bg-secondary"></div>
+<p class="text-on-surface-variant max-w-md font-medium text-sm pt-4">Adjust critical deactivation parameters and sensor sensitivity to maintain operational integrity.</p>
+</section>
+<!-- EMERGENCY PROTOCOLS -->
+<section class="space-y-6">
+<div class="flex items-center gap-3">
+<div class="w-2 h-6 bg-primary-fixed-dim"></div>
+<h3 class="font-headline font-bold text-xl uppercase tracking-widest text-primary-fixed-dim">EMERGENCY PROTOCOLS</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-px bg-outline-variant/15">
+<div class="bg-surface-container p-6 space-y-4">
+<label class="block font-headline text-xs font-bold text-on-surface-variant uppercase tracking-widest">Primary Contact</label>
+<div class="relative">
+<input class="w-full bg-surface-container-highest border-b-2 border-outline focus:border-primary text-on-surface p-4 font-body transition-colors" type="text" value="+1 (555) 902-1240"/>
+<span class="absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline" data-icon="contact_emergency">contact_emergency</span>
+</div>
+</div>
+<div class="bg-surface-container p-6 space-y-4">
+<label class="block font-headline text-xs font-bold text-on-surface-variant uppercase tracking-widest">Protocol Logic</label>
+<div class="flex gap-2">
+<button class="flex-1 anodic-gradient text-on-primary-fixed font-headline font-bold py-3 text-xs uppercase tracking-tighter">SMS ALERT</button>
+<button class="flex-1 bg-surface-container-highest border border-outline-variant/30 text-on-surface font-headline font-bold py-3 text-xs uppercase tracking-tighter hover:bg-surface-bright transition-colors">VOICE CALL</button>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-low p-6 flex items-center justify-between border-l-4 border-secondary">
+<div>
+<h4 class="font-headline font-bold text-on-surface uppercase">Fail-Safe Trigger</h4>
+<p class="text-xs text-on-surface-variant uppercase">Contact primary if deactivation window exceeds 300s</p>
+</div>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-14 h-7 bg-surface-container-highest peer-checked:bg-secondary transition-colors"></div>
+<div class="absolute left-1 top-1 bg-on-surface w-5 h-5 transition-transform peer-checked:translate-x-7 peer-checked:bg-on-secondary-fixed"></div>
+</div>
+</div>
+</section>
+<!-- SYSTEM OVERRIDES -->
+<section class="space-y-6">
+<div class="flex items-center gap-3">
+<div class="w-2 h-6 bg-secondary"></div>
+<h3 class="font-headline font-bold text-xl uppercase tracking-widest text-secondary">SYSTEM OVERRIDES</h3>
+</div>
+<div class="space-y-4">
+<div class="bg-surface-container-highest p-8 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-8xl" data-icon="notifications_off">notifications_off</span>
+</div>
+<div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+<div class="max-w-md">
+<h4 class="font-headline font-bold text-2xl uppercase tracking-tighter text-on-surface">Bypass "Do Not Disturb"</h4>
+<p class="text-on-surface-variant text-sm mt-2">Force system alerts through any OS-level silence protocols. Vital for high-stakes deactivations.</p>
+</div>
+<button class="bg-on-surface text-surface px-8 py-4 font-headline font-black text-sm uppercase tracking-widest hover:bg-primary transition-all active:scale-95">ENABLE OVERRIDE</button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div class="bg-surface-container p-6 border-t-2 border-outline-variant/30">
+<span class="material-symbols-outlined text-secondary block mb-4" data-icon="volume_up">volume_up</span>
+<h5 class="font-headline font-bold text-xs uppercase tracking-widest mb-2">Max Amplitude</h5>
+<div class="h-2 bg-surface-container-highest relative">
+<div class="absolute inset-y-0 left-0 w-3/4 bg-secondary"></div>
+</div>
+</div>
+<div class="bg-surface-container p-6 border-t-2 border-outline-variant/30">
+<span class="material-symbols-outlined text-primary block mb-4" data-icon="vibration">vibration</span>
+<h5 class="font-headline font-bold text-xs uppercase tracking-widest mb-2">Haptic Pulse</h5>
+<div class="h-2 bg-surface-container-highest relative">
+<div class="absolute inset-y-0 left-0 w-full anodic-gradient"></div>
+</div>
+</div>
+<div class="bg-surface-container p-6 border-t-2 border-outline-variant/30">
+<span class="material-symbols-outlined text-tertiary block mb-4" data-icon="flashlight_on">flashlight_on</span>
+<h5 class="font-headline font-bold text-xs uppercase tracking-widest mb-2">Visual Strobe</h5>
+<div class="h-2 bg-surface-container-highest relative">
+<div class="absolute inset-y-0 left-0 w-1/4 bg-tertiary"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- SENSOR CALIBRATION -->
+<section class="space-y-6">
+<div class="flex items-center gap-3">
+<div class="w-2 h-6 bg-tertiary"></div>
+<h3 class="font-headline font-bold text-xl uppercase tracking-widest text-tertiary">SENSOR CALIBRATION</h3>
+</div>
+<div class="bg-surface-container p-8 space-y-8">
+<div class="space-y-4">
+<div class="flex justify-between items-end">
+<h4 class="font-headline font-bold text-on-surface uppercase tracking-tight">Accelerometer Sensitivity</h4>
+<span class="font-headline text-tertiary text-2xl font-black">8.4<span class="text-xs ml-1">G</span></span>
+</div>
+<input class="w-full h-12 bg-surface-container-highest appearance-none cursor-pointer accent-tertiary px-2" max="10" min="0" step="0.1" type="range" value="8.4"/>
+<div class="flex justify-between text-[10px] font-headline font-bold text-outline-variant uppercase tracking-widest">
+<span>Low Precision</span>
+<span>High Precision</span>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+<div class="space-y-2">
+<label class="block font-headline text-xs font-bold text-on-surface-variant uppercase tracking-widest">Calibration Mood</label>
+<select class="w-full bg-surface-container-highest border-none text-on-surface font-headline font-bold uppercase tracking-tighter p-4 text-sm focus:ring-1 focus:ring-tertiary transition-shadow">
+<option>AGGRESSIVE (FAST)</option>
+<option>STANDARD (BALANCED)</option>
+<option>PRECISE (STRICT)</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="block font-headline text-xs font-bold text-on-surface-variant uppercase tracking-widest">Drift Compensation</label>
+<div class="flex h-12">
+<input class="flex-1 bg-surface-container-highest border-none text-on-surface font-headline font-bold p-4 text-sm focus:ring-1 focus:ring-tertiary transition-shadow" type="number" value="150"/>
+<div class="bg-surface-bright flex items-center px-4 font-headline text-[10px] font-black text-on-surface-variant uppercase">ms</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Final Action -->
+<footer class="pt-8 flex flex-col gap-4">
+<button class="w-full anodic-gradient py-6 font-headline font-black text-xl uppercase tracking-[0.2em] text-on-primary-fixed shadow-[0_0_30_rgba(254,94,30,0.2)] active:scale-[0.98] transition-all">
+                DEPLOY CONFIGURATION
+            </button>
+<button class="w-full border border-outline-variant/30 py-4 font-headline font-bold text-sm uppercase tracking-widest text-on-surface-variant hover:text-error hover:border-error/50 transition-colors">
+                RESET TO FACTORY DEFAULT
+            </button>
+</footer>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center bg-[#0e0e0e] border-t border-[#484847]/15">
+<a class="flex flex-col items-center justify-center text-[#484847] p-4 hover:text-[#ff9069] active:scale-95 transition-all duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="alarm">alarm</span>
+<span class="font-['Space_Grotesk'] uppercase text-[10px] font-bold mt-1">Status</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#484847] p-4 hover:text-[#ff9069] active:scale-95 transition-all duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-['Space_Grotesk'] uppercase text-[10px] font-bold mt-1">Data</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#fe5e1e] border-t-4 border-[#eaea00] p-4 active:scale-95 transition-all duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-['Space_Grotesk'] uppercase text-[10px] font-bold mt-1">Config</span>
+</a>
+</nav>
+</body></html>

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ALARM SETUP - SYSTEM ARMED</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;900&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary": "#591800",
+                    "secondary": "#eaea00",
+                    "on-secondary-fixed": "#424200",
+                    "on-error": "#490006",
+                    "on-secondary": "#555500",
+                    "on-tertiary-container": "#005a10",
+                    "surface-container-low": "#131313",
+                    "surface-container": "#1a1a1a",
+                    "primary-fixed": "#ff7948",
+                    "on-tertiary-fixed": "#00440a",
+                    "on-secondary-container": "#ffff60",
+                    "on-primary-fixed": "#000000",
+                    "on-primary-fixed-variant": "#551600",
+                    "background": "#0e0e0e",
+                    "on-surface-variant": "#adaaaa",
+                    "outline": "#767575",
+                    "secondary-container": "#626200",
+                    "on-background": "#ffffff",
+                    "tertiary-container": "#00fc40",
+                    "tertiary-dim": "#00ec3b",
+                    "on-surface": "#ffffff",
+                    "on-error-container": "#ffa8a3",
+                    "secondary-fixed": "#eaea00",
+                    "outline-variant": "#484847",
+                    "surface-dim": "#0e0e0e",
+                    "surface-container-highest": "#262626",
+                    "primary": "#ff9069",
+                    "inverse-on-surface": "#565555",
+                    "on-tertiary-fixed-variant": "#006513",
+                    "error-dim": "#d7383b",
+                    "surface-container-high": "#20201f",
+                    "error": "#ff716c",
+                    "tertiary-fixed": "#00fc40",
+                    "on-tertiary": "#006413",
+                    "inverse-primary": "#ac3600",
+                    "inverse-surface": "#fcf9f8",
+                    "primary-dim": "#ff7441",
+                    "tertiary": "#9cff93",
+                    "secondary-dim": "#dbdb00",
+                    "on-secondary-fixed-variant": "#5f5f00",
+                    "surface-container-lowest": "#000000",
+                    "surface-variant": "#262626",
+                    "primary-container": "#ff7948",
+                    "surface-tint": "#ff9069",
+                    "secondary-fixed-dim": "#dbdb00",
+                    "surface-bright": "#2c2c2c",
+                    "on-primary-container": "#451000",
+                    "error-container": "#9f0519",
+                    "surface": "#0e0e0e",
+                    "tertiary-fixed-dim": "#00ec3b",
+                    "primary-fixed-dim": "#fe5e1e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0px",
+                    "lg": "0px",
+                    "xl": "0px",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Space Grotesk"],
+                    "body": ["Inter"],
+                    "label": ["Space Grotesk"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0e0e0e;
+            color: #ffffff;
+        }
+        .space-grotesk {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .anodic-gradient {
+            background: linear-gradient(45deg, #fe5e1e 0%, #ff9069 100%);
+        }
+        .ghost-border {
+            outline: 1px solid rgba(72, 72, 71, 0.15);
+        }
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0e0e0e;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #262626;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-24">
+<!-- TopAppBar -->
+<header class="bg-[#0e0e0e] text-[#fe5e1e] font-['Space_Grotesk'] uppercase tracking-tighter font-bold w-full top-0 left-0 flex justify-between items-center px-6 h-16 w-full z-50">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-2xl">sensors</span>
+<span class="text-2xl font-black text-[#fe5e1e] tracking-widest">SYSTEM ARMED</span>
+</div>
+<button class="hover:bg-[#262626] transition-colors duration-150 p-2 active:bg-[#fe5e1e] active:text-[#0e0e0e]">
+<span class="material-symbols-outlined">close</span>
+</button>
+</header>
+<main class="max-w-2xl mx-auto px-6 pt-8 space-y-12">
+<!-- Large Bold Time Picker -->
+<section class="flex flex-col items-center">
+<div class="flex items-baseline justify-center space-x-4">
+<div class="flex flex-col items-center">
+<button class="text-outline-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-4xl">expand_less</span>
+</button>
+<span class="text-8xl md:text-9xl font-black space-grotesk uppercase leading-none">06</span>
+<button class="text-outline-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-4xl">expand_more</span>
+</button>
+</div>
+<span class="text-7xl font-black space-grotesk text-secondary leading-none self-center">:</span>
+<div class="flex flex-col items-center">
+<button class="text-outline-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-4xl">expand_less</span>
+</button>
+<span class="text-8xl md:text-9xl font-black space-grotesk uppercase leading-none">30</span>
+<button class="text-outline-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-4xl">expand_more</span>
+</button>
+</div>
+<div class="flex flex-col self-center ml-4">
+<span class="text-2xl font-bold space-grotesk text-primary">AM</span>
+<span class="text-2xl font-bold space-grotesk text-outline-variant opacity-30">PM</span>
+</div>
+</div>
+<div class="mt-4 bg-surface-container-high px-4 py-2 ghost-border">
+<p class="text-[10px] space-grotesk font-bold uppercase tracking-[0.2em] text-outline">Wake Up Window: 06:15 - 06:45</p>
+</div>
+</section>
+<!-- Days Active (Repetition) -->
+<section class="space-y-4">
+<h2 class="text-xs space-grotesk font-black uppercase tracking-[0.3em] text-outline flex items-center gap-2">
+<span class="w-8 h-[1px] bg-outline-variant"></span>
+                Repetition Schedule
+            </h2>
+<div class="grid grid-cols-7 gap-2">
+<button class="aspect-square flex items-center justify-center bg-surface-container-highest border-l-4 border-secondary text-secondary font-bold space-grotesk text-sm hover:bg-secondary hover:text-on-primary-fixed transition-all">M</button>
+<button class="aspect-square flex items-center justify-center bg-surface-container-highest border-l-4 border-secondary text-secondary font-bold space-grotesk text-sm hover:bg-secondary hover:text-on-primary-fixed transition-all">T</button>
+<button class="aspect-square flex items-center justify-center bg-surface-container-highest border-l-4 border-secondary text-secondary font-bold space-grotesk text-sm hover:bg-secondary hover:text-on-primary-fixed transition-all">W</button>
+<button class="aspect-square flex items-center justify-center bg-surface-container-highest border-l-4 border-secondary text-secondary font-bold space-grotesk text-sm hover:bg-secondary hover:text-on-primary-fixed transition-all">T</button>
+<button class="aspect-square flex items-center justify-center bg-surface-container-highest border-l-4 border-secondary text-secondary font-bold space-grotesk text-sm hover:bg-secondary hover:text-on-primary-fixed transition-all">F</button>
+<button class="aspect-square flex items-center justify-center bg-surface-container border-l-4 border-transparent text-outline-variant font-bold space-grotesk text-sm hover:bg-surface-container-highest transition-all">S</button>
+<button class="aspect-square flex items-center justify-center bg-surface-container border-l-4 border-transparent text-outline-variant font-bold space-grotesk text-sm hover:bg-surface-container-highest transition-all">S</button>
+</div>
+</section>
+<!-- Mission Tasks Grid -->
+<section class="space-y-4">
+<div class="flex justify-between items-end">
+<h2 class="text-xs space-grotesk font-black uppercase tracking-[0.3em] text-outline flex items-center gap-2">
+<span class="w-8 h-[1px] bg-outline-variant"></span>
+                    Deactivation Missions
+                </h2>
+<span class="text-[10px] space-grotesk font-bold text-primary uppercase">Required: 02</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<!-- Task: Photo -->
+<div class="bg-surface-container p-6 flex flex-col gap-4 relative overflow-hidden group hover:bg-surface-container-high transition-colors">
+<div class="absolute top-0 right-0 p-2 opacity-10">
+<span class="material-symbols-outlined text-6xl">photo_camera</span>
+</div>
+<span class="material-symbols-outlined text-secondary text-3xl">photo_camera</span>
+<div>
+<h3 class="space-grotesk font-black text-sm uppercase tracking-wider">Visual Sync</h3>
+<p class="text-[10px] text-outline leading-relaxed mt-1">Capture specific object in kitchen to verify wakefulness.</p>
+</div>
+<div class="flex justify-between items-center mt-auto">
+<span class="text-[9px] font-bold text-tertiary uppercase">Active</span>
+<div class="w-2 h-2 bg-tertiary"></div>
+</div>
+</div>
+<!-- Task: Step -->
+<div class="bg-surface-container p-6 flex flex-col gap-4 relative overflow-hidden group hover:bg-surface-container-high transition-colors">
+<div class="absolute top-0 right-0 p-2 opacity-10">
+<span class="material-symbols-outlined text-6xl">directions_run</span>
+</div>
+<span class="material-symbols-outlined text-outline text-3xl">directions_run</span>
+<div>
+<h3 class="space-grotesk font-black text-sm uppercase tracking-wider">Kinetic Lock</h3>
+<p class="text-[10px] text-outline leading-relaxed mt-1">Execute 50 steps within 120 seconds of initial trigger.</p>
+</div>
+<div class="flex justify-between items-center mt-auto">
+<span class="text-[9px] font-bold text-outline uppercase">Inactive</span>
+<div class="w-2 h-2 bg-outline-variant"></div>
+</div>
+</div>
+<!-- Task: Voice -->
+<div class="bg-surface-container p-6 flex flex-col gap-4 relative overflow-hidden group hover:bg-surface-container-high transition-colors border-l-4 border-secondary">
+<div class="absolute top-0 right-0 p-2 opacity-10">
+<span class="material-symbols-outlined text-6xl">mic</span>
+</div>
+<span class="material-symbols-outlined text-secondary text-3xl">mic</span>
+<div>
+<h3 class="space-grotesk font-black text-sm uppercase tracking-wider">Voice Auth</h3>
+<p class="text-[10px] text-outline leading-relaxed mt-1">Recite the daily manifesto clearly for voice analysis.</p>
+</div>
+<div class="flex justify-between items-center mt-auto">
+<span class="text-[9px] font-bold text-tertiary uppercase">Active</span>
+<div class="w-2 h-2 bg-tertiary"></div>
+</div>
+</div>
+<!-- Task: QR -->
+<div class="bg-surface-container p-6 flex flex-col gap-4 relative overflow-hidden group hover:bg-surface-container-high transition-colors">
+<div class="absolute top-0 right-0 p-2 opacity-10">
+<span class="material-symbols-outlined text-6xl">qr_code_scanner</span>
+</div>
+<span class="material-symbols-outlined text-outline text-3xl">qr_code_scanner</span>
+<div>
+<h3 class="space-grotesk font-black text-sm uppercase tracking-wider">Secure Scan</h3>
+<p class="text-[10px] text-outline leading-relaxed mt-1">Locate and scan high-contrast terminal code.</p>
+</div>
+<div class="flex justify-between items-center mt-auto">
+<span class="text-[9px] font-bold text-outline uppercase">Inactive</span>
+<div class="w-2 h-2 bg-outline-variant"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Urgent Action Bar -->
+<section class="space-y-6">
+<div class="flex gap-4">
+<button class="flex-1 anodic-gradient py-5 font-black uppercase space-grotesk tracking-widest text-on-primary-fixed active:scale-95 transition-all">
+                    COMMIT PROTOCOL
+                </button>
+</div>
+<div class="flex items-center gap-4 bg-surface-container-low p-4">
+<span class="material-symbols-outlined text-error text-xl">warning</span>
+<p class="text-[10px] text-outline uppercase leading-tight font-medium">Warning: Failure to complete deactivation missions will trigger emergency contact escalation.</p>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Filtered Context: Top Level) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center bg-[#0e0e0e] border-t border-[#484847]/15 h-20">
+<a class="flex flex-col items-center justify-center text-[#484847] p-4 hover:text-[#ff9069] active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="alarm">alarm</span>
+<span class="font-['Space_Grotesk'] uppercase text-[10px] font-bold mt-1">Alarms</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#fe5e1e] border-t-4 border-[#eaea00] p-4 hover:text-[#ff9069] active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="add_box">add_box</span>
+<span class="font-['Space_Grotesk'] uppercase text-[10px] font-bold mt-1">Deploy</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#484847] p-4 hover:text-[#ff9069] active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-['Space_Grotesk'] uppercase text-[10px] font-bold mt-1">Data</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#484847] p-4 hover:text-[#ff9069] active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-['Space_Grotesk'] uppercase text-[10px] font-bold mt-1">Config</span>
+</a>
+</nav>
+</body></html>
