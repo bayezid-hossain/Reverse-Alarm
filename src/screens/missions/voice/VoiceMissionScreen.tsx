@@ -84,7 +84,7 @@ export default function VoiceMissionScreen() {
     if (!text.trim()) return;
     setStage('validating');
     // Brief pause so loading state is visible
-    await new Promise((r) => setTimeout(r, 600));
+    await new Promise<void>((resolve) => setTimeout(() => resolve(), 600));
     const score = MissionValidator.voiceScore(text, activePhrase);
     setMatchScore(score);
     const valid = score >= taskConfig.matchThreshold;
