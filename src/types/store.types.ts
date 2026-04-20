@@ -6,6 +6,8 @@ export interface AppConfig {
   defaultVolume: number;       // 0–100
   hapticsEnabled: boolean;
   defaultTaskType: TaskType;
+  defaultStepTarget: number;
+  defaultQRContent: string;
   timePickerStyle: 'wheel' | 'grid';
   onboardingComplete: boolean;
 }

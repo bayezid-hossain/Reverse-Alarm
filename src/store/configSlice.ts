@@ -11,6 +11,8 @@ const DEFAULT_CONFIG: AppConfig = {
   defaultVolume: 100,
   hapticsEnabled: true,
   defaultTaskType: 'steps',
+  defaultStepTarget: 50,
+  defaultQRContent: 'REVERSE_ALARM_QR',
   timePickerStyle: 'wheel',
   onboardingComplete: false,
 };

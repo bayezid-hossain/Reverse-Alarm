@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, BackHandler } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -7,11 +7,13 @@ import { MissionStackParamList } from '@/types/navigation.types';
 import { Colors } from '@/constants/colors';
 import { Spacing } from '@/constants/layout';
 import { VoltageText } from '@/components/VoltageText';
+import { VoltageButton } from '@/components/VoltageButton';
 import { SegmentedProgressBar } from '@/components/SegmentedProgressBar';
 import { StepCounter } from './components/StepCounter';
 import { useStepCounter } from '@/hooks/useStepCounter';
 import { useStore } from '@/store';
 import { buildMissionResult } from '@/utils/missionUtils';
+import { TASK_DISPLAY, DEFAULT_TASK_CONFIGS } from '@/constants/missions';
 
 type Nav = StackNavigationProp<MissionStackParamList>;
 type Route = RouteProp<MissionStackParamList, 'StepMission'>;
@@ -24,6 +26,7 @@ export default function StepMissionScreen() {
   const missionStartedAt = useStore((s) => s.missionStartedAt);
   const taskAttempts = useStore((s) => s.taskAttempts);
   const incrementAttempts = useStore((s) => s.incrementAttempts);
+  const [showSwitch, setShowSwitch] = useState(false);
 
   const progress = Math.min(stepCount / taskConfig.targetSteps, 1);
 
@@ -33,13 +36,11 @@ export default function StepMissionScreen() {
     return () => stopCounting();
   }, []);
 
-  // Block back button
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
     return () => sub.remove();
   }, []);
 
-  // Check completion
   useEffect(() => {
     if (stepCount >= taskConfig.targetSteps) {
       stopCounting();
@@ -53,9 +54,19 @@ export default function StepMissionScreen() {
     }
   }, [stepCount, taskConfig.targetSteps]);
 
+  function switchMission(type: keyof typeof DEFAULT_TASK_CONFIGS) {
+    if (type === 'steps') return;
+    stopCounting();
+    const config = DEFAULT_TASK_CONFIGS[type] as any;
+    switch (type) {
+      case 'voice': navigation.replace('VoiceMission', { taskConfig: config, alarmId }); break;
+      case 'photo': navigation.replace('VisualSyncMission', { taskConfig: config, alarmId }); break;
+      case 'qr': navigation.replace('QRScanMission', { taskConfig: config, alarmId }); break;
+    }
+  }
+
   return (
     <SafeAreaView style={styles.screen}>
-      {/* Header */}
       <View style={styles.header}>
         <VoltageText variant="label" color={Colors.textMuted}>SYSTEM ARMED</VoltageText>
         <View style={styles.badge}>
@@ -63,22 +74,18 @@ export default function StepMissionScreen() {
         </View>
       </View>
 
-      {/* Urgency */}
       <VoltageText variant="h3" color={Colors.error} style={styles.urgency}>
         DEACTIVATE OR ALERT
       </VoltageText>
 
-      {/* Decoration text */}
       <VoltageText variant="h1" color={Colors.surface} style={styles.decoration}>
         MOVE
       </VoltageText>
 
-      {/* Step counter */}
       <View style={styles.counterBlock}>
         <StepCounter current={stepCount} target={taskConfig.targetSteps} />
       </View>
 
-      {/* Progress bar */}
       <View style={styles.progressBlock}>
         <SegmentedProgressBar progress={progress} segments={14} color={Colors.warning} />
         <VoltageText variant="caption" color={Colors.textMuted} style={styles.progressLabel}>
@@ -86,15 +93,31 @@ export default function StepMissionScreen() {
         </VoltageText>
       </View>
 
-      {/* Instruction */}
       <View style={styles.instruction}>
         <VoltageText variant="bodySmall" color={Colors.textSecondary}>
-          Walk naturally. Steps are detected via motion sensor.{'\n'}
+          Walk naturally. Steps detected via hardware motion sensor.{'\n'}
           Keep phone in hand or pocket while walking.
         </VoltageText>
       </View>
 
-      {/* Side data */}
+      {showSwitch ? (
+        <View style={styles.switchPanel}>
+          <VoltageText variant="label" color={Colors.textMuted} style={styles.switchLabel}>
+            SWITCH MISSION
+          </VoltageText>
+          <View style={styles.switchRow}>
+            {(['voice', 'photo', 'qr'] as const).map((t) => (
+              <VoltageButton
+                key={t}
+                label={TASK_DISPLAY[t].label}
+                onPress={() => switchMission(t)}
+                style={styles.switchBtn}
+              />
+            ))}
+          </View>
+        </View>
+      ) : null}
+
       <View style={styles.bioPanel}>
         <View style={styles.bioItem}>
           <VoltageText variant="caption" color={Colors.textMuted}>MOTION</VoltageText>
@@ -103,6 +126,13 @@ export default function StepMissionScreen() {
         <View style={styles.bioItem}>
           <VoltageText variant="caption" color={Colors.textMuted}>LOCK STATE</VoltageText>
           <VoltageText variant="label" color={Colors.error}>ENGAGED</VoltageText>
+        </View>
+        <View style={{ flex: 1, alignItems: 'flex-end' }}>
+          <VoltageButton
+            label="SWITCH MISSION"
+            onPress={() => setShowSwitch((v) => !v)}
+            style={styles.switchToggle}
+          />
         </View>
       </View>
     </SafeAreaView>
@@ -155,11 +185,32 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     marginBottom: Spacing.md,
   },
+  switchPanel: {
+    backgroundColor: Colors.surface,
+    padding: Spacing.md,
+    marginBottom: Spacing.sm,
+  },
+  switchLabel: {
+    marginBottom: Spacing.sm,
+    letterSpacing: 1,
+  },
+  switchRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  switchBtn: {
+    flex: 1,
+  },
   bioPanel: {
     flexDirection: 'row',
     gap: Spacing.lg,
+    alignItems: 'center',
   },
   bioItem: {
     gap: 4,
+  },
+  switchToggle: {
+    backgroundColor: Colors.surfaceMuted,
+    paddingHorizontal: Spacing.sm,
   },
 });

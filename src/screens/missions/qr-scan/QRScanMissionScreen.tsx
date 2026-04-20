@@ -10,6 +10,7 @@ import { VoltageButton } from '@/components/VoltageButton';
 import { VoltageText } from '@/components/VoltageText';
 import { Colors } from '@/constants/colors';
 import { Spacing } from '@/constants/layout';
+import { TASK_DISPLAY, DEFAULT_TASK_CONFIGS } from '@/constants/missions';
 import { usePermissions } from '@/hooks/usePermissions';
 import { MissionValidator } from '@/services/mission/MissionValidator';
 import { useStore } from '@/store';
@@ -28,6 +29,7 @@ export default function QRScanMissionScreen() {
   const { cameraPermission, requestCamera } = usePermissions();
   const [scanned, setScanned] = useState(false);
   const [scanResult, setScanResult] = useState<string | null>(null);
+  const [showSwitch, setShowSwitch] = useState(false);
 
   const missionStartedAt = useStore((s) => s.missionStartedAt);
   const taskAttempts = useStore((s) => s.taskAttempts);
@@ -58,11 +60,20 @@ export default function QRScanMissionScreen() {
         });
         navigation.replace('MissionSuccess', { result });
       } else {
-        // Invalid QR — reset after 2s
         setTimeout(() => { setScanned(false); setScanResult(null); }, 2000);
       }
     },
   });
+
+  function switchMission(type: keyof typeof DEFAULT_TASK_CONFIGS) {
+    if (type === 'qr') return;
+    const config = DEFAULT_TASK_CONFIGS[type] as any;
+    switch (type) {
+      case 'steps': navigation.replace('StepMission', { taskConfig: config, alarmId }); break;
+      case 'voice': navigation.replace('VoiceMission', { taskConfig: config, alarmId }); break;
+      case 'photo': navigation.replace('VisualSyncMission', { taskConfig: config, alarmId }); break;
+    }
+  }
 
   if (!cameraPermission) {
     return (
@@ -84,7 +95,6 @@ export default function QRScanMissionScreen() {
         SCAN QR TERMINAL
       </VoltageText>
 
-      {/* QR scanner viewport */}
       <View style={styles.viewport}>
         {device ? (
           <Camera
@@ -94,7 +104,6 @@ export default function QRScanMissionScreen() {
             codeScanner={codeScanner}
           />
         ) : null}
-        {/* QR frame overlay */}
         <View style={styles.qrFrame}>
           <View style={[styles.qrCorner, styles.qrTL]} />
           <View style={[styles.qrCorner, styles.qrTR]} />
@@ -103,7 +112,6 @@ export default function QRScanMissionScreen() {
         </View>
       </View>
 
-      {/* Status */}
       <View style={styles.status}>
         <PulseIndicator
           color={scanned ? Colors.clearance : Colors.warning}
@@ -121,8 +129,38 @@ export default function QRScanMissionScreen() {
 
       <View style={styles.instruction}>
         <VoltageText variant="bodySmall" color={Colors.textSecondary}>
-          Point camera at the designated QR terminal. Hold steady until scan completes.
+          Scan a QR code containing: <VoltageText variant="bodySmall" color={Colors.heat}>
+            {taskConfig.expectedContent}
+          </VoltageText>
+          {'\n'}Print this QR code and place it away from your bed (fridge, bathroom, etc.).
         </VoltageText>
+      </View>
+
+      {showSwitch ? (
+        <View style={styles.switchPanel}>
+          <VoltageText variant="label" color={Colors.textMuted} style={styles.switchLabel}>
+            SWITCH MISSION
+          </VoltageText>
+          <View style={styles.switchRow}>
+            {(['steps', 'voice', 'photo'] as const).map((t) => (
+              <VoltageButton
+                key={t}
+                label={TASK_DISPLAY[t].label}
+                onPress={() => switchMission(t)}
+                style={styles.switchBtn}
+              />
+            ))}
+          </View>
+        </View>
+      ) : null}
+
+      <View style={styles.controls}>
+        <VoltageButton
+          label="SWITCH MISSION"
+          fullWidth
+          onPress={() => setShowSwitch((v) => !v)}
+          style={styles.switchToggle}
+        />
       </View>
     </SafeAreaView>
   );
@@ -145,7 +183,7 @@ const styles = StyleSheet.create({
   },
   viewport: {
     width: '100%',
-    height: 300,
+    height: 280,
     backgroundColor: Colors.surface,
     marginBottom: Spacing.md,
     overflow: 'hidden',
@@ -179,5 +217,28 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     padding: Spacing.md,
     flex: 1,
+    marginBottom: Spacing.md,
+  },
+  switchPanel: {
+    backgroundColor: Colors.surface,
+    padding: Spacing.md,
+    marginBottom: Spacing.sm,
+  },
+  switchLabel: {
+    marginBottom: Spacing.sm,
+    letterSpacing: 1,
+  },
+  switchRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  switchBtn: {
+    flex: 1,
+  },
+  controls: {
+    marginTop: 'auto',
+  },
+  switchToggle: {
+    backgroundColor: Colors.surfaceMuted,
   },
 });

@@ -22,6 +22,7 @@ import {
   DEFAULT_VOICE_THRESHOLD,
   DEFAULT_COLOR_TOLERANCE,
   TASK_TYPES,
+  getRandomVoicePhrase,
 } from '@/constants/missions';
 import { VoltageText } from '@/components/VoltageText';
 import { VoltageButton } from '@/components/VoltageButton';
@@ -29,6 +30,7 @@ import { TimePicker } from './components/TimePicker';
 import { DaySelector } from './components/DaySelector';
 import { TaskTypeCard } from './components/TaskTypeCard';
 import { useAlarms } from '@/hooks/useAlarms';
+import { useKeyboard } from '@/hooks/useKeyboard';
 import { useStore } from '@/store';
 
 const DEFAULT_REPEAT: RepeatDays = {
@@ -52,17 +54,18 @@ export default function AlarmSetupScreen() {
   const [taskType, setTaskType] = useState<TaskType>(existing?.taskType ?? 'steps');
   const [label, setLabel] = useState(existing?.label ?? '');
   const [isSaving, setIsSaving] = useState(false);
+  const { isKeyboardShown, keyboardHeight } = useKeyboard();
 
   function buildTaskConfig() {
     switch (taskType) {
       case 'steps':
-        return { type: 'steps' as const, targetSteps: DEFAULT_STEP_TARGET };
+        return { type: 'steps' as const, targetSteps: useStore.getState().config.defaultStepTarget };
       case 'voice':
-        return { type: 'voice' as const, phrase: DEFAULT_VOICE_PHRASE, matchThreshold: DEFAULT_VOICE_THRESHOLD };
+        return { type: 'voice' as const, phrase: getRandomVoicePhrase(), matchThreshold: DEFAULT_VOICE_THRESHOLD };
       case 'photo':
         return { type: 'photo' as const, targetColor: '#fe5e1e', colorToleranceDeltaE: DEFAULT_COLOR_TOLERANCE };
       case 'qr':
-        return { type: 'qr' as const, expectedContent: 'REVERSE_ALARM_QR', matchMode: 'contains' as const };
+        return { type: 'qr' as const, expectedContent: useStore.getState().config.defaultQRContent, matchMode: 'contains' as const };
     }
   }
 
@@ -98,7 +101,13 @@ export default function AlarmSetupScreen() {
         <View style={{ width: 60 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView 
+        contentContainerStyle={[
+          styles.content,
+          isKeyboardShown && { paddingBottom: keyboardHeight + Spacing.md }
+        ]}
+        keyboardShouldPersistTaps="handled"
+      >
         {/* Time Picker */}
         <View style={styles.section}>
           <VoltageText variant="label" color={Colors.textSecondary} style={styles.sectionLabel}>

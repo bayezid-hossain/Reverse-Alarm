@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { VoltageText } from '@/components/VoltageText';
@@ -6,17 +6,32 @@ import { Colors } from '@/constants/colors';
 import { Spacing } from '@/constants/layout';
 
 interface GridTimePickerProps {
-  hour: number;
-  minute: number;
+  hour: number;   // 0-23
+  minute: number; // 0-59
   onChange: (hour: number, minute: number) => void;
 }
 
-const HOURS = Array.from({ length: 24 }, (_, i) => i);
+// 12-hour display values
+const HOURS_12 = Array.from({ length: 12 }, (_, i) => (i === 0 ? 12 : i)); // [12,1,...,11]
 const MINUTES_QUICK = Array.from({ length: 12 }, (_, i) => i * 5);
 
+function to12h(h24: number): { h12: number; isPM: boolean } {
+  const isPM = h24 >= 12;
+  const h12 = h24 % 12 || 12;
+  return { h12, isPM };
+}
+
+function to24h(h12: number, isPM: boolean): number {
+  if (isPM) return h12 === 12 ? 12 : h12 + 12;
+  return h12 === 12 ? 0 : h12;
+}
+
 export function GridTimePicker({ hour, minute, onChange }: GridTimePickerProps) {
-  const onSelectHour = (h: number) => {
-    onChange(h, minute);
+  const { h12: initH12, isPM: initPM } = to12h(hour);
+  const [isPM, setIsPM] = useState(initPM);
+
+  const onSelectHour = (h12: number) => {
+    onChange(to24h(h12, isPM), minute);
     Haptics.selectionAsync();
   };
 
@@ -25,24 +40,54 @@ export function GridTimePicker({ hour, minute, onChange }: GridTimePickerProps) 
     Haptics.selectionAsync();
   };
 
+  const onToggleAMPM = (pm: boolean) => {
+    setIsPM(pm);
+    onChange(to24h(initH12, pm), minute);
+    Haptics.selectionAsync();
+  };
+
   return (
     <View style={styles.container}>
-      <VoltageText variant="label" color={Colors.textMuted} style={styles.label}>HOUR (24H)</VoltageText>
-      <View style={styles.grid}>
-        {HOURS.map((h) => (
-          <TouchableOpacity
-            key={h}
-            onPress={() => onSelectHour(h)}
-            style={[styles.cell, hour === h && styles.cellActive]}
-          >
-            <VoltageText
-              variant="caption"
-              color={hour === h ? Colors.textInverse : Colors.textPrimary}
+      {/* AM/PM toggle */}
+      <View style={styles.ampmRow}>
+        {(['AM', 'PM'] as const).map((label) => {
+          const active = label === 'PM' ? isPM : !isPM;
+          return (
+            <TouchableOpacity
+              key={label}
+              onPress={() => onToggleAMPM(label === 'PM')}
+              style={[styles.ampmBtn, active && styles.ampmActive]}
             >
-              {String(h).padStart(2, '0')}
-            </VoltageText>
-          </TouchableOpacity>
-        ))}
+              <VoltageText
+                variant="label"
+                color={active ? Colors.heat : Colors.textMuted}
+              >
+                {label}
+              </VoltageText>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      <VoltageText variant="label" color={Colors.textMuted} style={styles.label}>HOUR</VoltageText>
+      <View style={styles.grid}>
+        {HOURS_12.map((h) => {
+          const active = h === initH12;
+          return (
+            <TouchableOpacity
+              key={h}
+              onPress={() => onSelectHour(h)}
+              style={[styles.cell, active && styles.cellActive]}
+            >
+              <VoltageText
+                variant="caption"
+                color={active ? Colors.textInverse : Colors.textPrimary}
+              >
+                {String(h).padStart(2, '0')}
+              </VoltageText>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       <VoltageText variant="label" color={Colors.textMuted} style={[styles.label, { marginTop: Spacing.md }]}>
@@ -64,22 +109,22 @@ export function GridTimePicker({ hour, minute, onChange }: GridTimePickerProps) 
           </TouchableOpacity>
         ))}
       </View>
-      
+
       {/* Nudge for precise minutes */}
       <View style={styles.nudgeRow}>
-         <TouchableOpacity 
-            onPress={() => { onChange(hour, (minute - 1 + 60) % 60); Haptics.selectionAsync(); }}
-            style={styles.nudgeBtn}
-          >
-            <VoltageText variant="h4" color={Colors.heat}>-</VoltageText>
-         </TouchableOpacity>
-         <VoltageText variant="h3" color={Colors.textPrimary}>{String(minute).padStart(2, '0')}</VoltageText>
-         <TouchableOpacity 
-            onPress={() => { onChange(hour, (minute + 1) % 60); Haptics.selectionAsync(); }}
-            style={styles.nudgeBtn}
-          >
-            <VoltageText variant="h4" color={Colors.heat}>+</VoltageText>
-         </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => { onChange(hour, (minute - 1 + 60) % 60); Haptics.selectionAsync(); }}
+          style={styles.nudgeBtn}
+        >
+          <VoltageText variant="h4" color={Colors.heat}>-</VoltageText>
+        </TouchableOpacity>
+        <VoltageText variant="h3" color={Colors.textPrimary}>{String(minute).padStart(2, '0')}</VoltageText>
+        <TouchableOpacity
+          onPress={() => { onChange(hour, (minute + 1) % 60); Haptics.selectionAsync(); }}
+          style={styles.nudgeBtn}
+        >
+          <VoltageText variant="h4" color={Colors.heat}>+</VoltageText>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -88,6 +133,23 @@ export function GridTimePicker({ hour, minute, onChange }: GridTimePickerProps) 
 const styles = StyleSheet.create({
   container: {
     paddingVertical: Spacing.sm,
+  },
+  ampmRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  ampmBtn: {
+    flex: 1,
+    paddingVertical: Spacing.sm,
+    alignItems: 'center',
+    backgroundColor: Colors.surfaceMuted,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  ampmActive: {
+    borderColor: Colors.heat,
+    backgroundColor: Colors.surface,
   },
   label: {
     marginBottom: Spacing.xs,
@@ -100,7 +162,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   cell: {
-    width: 38,
+    width: 44,
     height: 38,
     backgroundColor: Colors.surfaceMuted,
     alignItems: 'center',
@@ -109,7 +171,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   cellWide: {
-    width: 50,
+    width: 54,
   },
   cellActive: {
     backgroundColor: Colors.heat,
@@ -126,5 +188,5 @@ const styles = StyleSheet.create({
   },
   nudgeBtn: {
     padding: Spacing.md,
-  }
+  },
 });

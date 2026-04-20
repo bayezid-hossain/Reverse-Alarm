@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, ScrollView, StyleSheet, Switch, TouchableOpacity } from 'react-native';
+import { View, ScrollView, StyleSheet, Switch, TouchableOpacity, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/colors';
 import { Spacing } from '@/constants/layout';
 import { VoltageText } from '@/components/VoltageText';
 import { VoltageCard } from '@/components/VoltageCard';
 import { useStore } from '@/store';
+import { useKeyboard } from '@/hooks/useKeyboard';
 
 function SettingRow({ label, sublabel, right }: { label: string; sublabel?: string; right: React.ReactNode }) {
   return (
@@ -22,6 +23,7 @@ function SettingRow({ label, sublabel, right }: { label: string; sublabel?: stri
 export default function AppConfigScreen() {
   const config = useStore((s) => s.config);
   const updateConfig = useStore((s) => s.updateConfig);
+  const { isKeyboardShown, keyboardHeight } = useKeyboard();
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -29,7 +31,13 @@ export default function AppConfigScreen() {
         <VoltageText variant="h4">SYSTEM CONFIG</VoltageText>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView 
+        contentContainerStyle={[
+          styles.content,
+          isKeyboardShown && { paddingBottom: keyboardHeight + Spacing.lg }
+        ]}
+        keyboardShouldPersistTaps="handled"
+      >
 
         <VoltageText variant="label" color={Colors.textMuted} style={styles.sectionLabel}>
           ALARM BEHAVIOUR
@@ -77,6 +85,51 @@ export default function AppConfigScreen() {
                   >GRID</VoltageText>
                 </TouchableOpacity>
               </View>
+            }
+          />
+        </VoltageCard>
+
+        <VoltageText variant="label" color={Colors.textMuted} style={styles.sectionLabel}>
+          MISSION PARAMETERS
+        </VoltageText>
+        <VoltageCard>
+          <SettingRow
+            label="Walking Goal"
+            sublabel="Distance for Kinetic Lock"
+            right={
+              <View style={styles.segmentContainer}>
+                {[
+                  { l: '10m', v: 15 },
+                  { l: '30m', v: 45 },
+                  { l: '50m', v: 75 },
+                  { l: '100m', v: 150 },
+                ].map((opt) => (
+                  <TouchableOpacity
+                    key={opt.l}
+                    onPress={() => updateConfig({ defaultStepTarget: opt.v })}
+                    style={[styles.segment, config.defaultStepTarget === opt.v && styles.segmentActive]}
+                  >
+                    <VoltageText
+                      variant="caption"
+                      color={config.defaultStepTarget === opt.v ? Colors.textInverse : Colors.textMuted}
+                    >{opt.l}</VoltageText>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            }
+          />
+          <SettingRow
+            label="QR Code Text"
+            sublabel="Challenge for Secure Scan"
+            right={
+              <TextInput
+                style={styles.configInput}
+                value={config.defaultQRContent}
+                onChangeText={(v) => updateConfig({ defaultQRContent: v })}
+                placeholder="QR TEXT"
+                placeholderTextColor={Colors.textMuted}
+                autoCapitalize="characters"
+              />
             }
           />
         </VoltageCard>
@@ -194,5 +247,14 @@ const styles = StyleSheet.create({
   },
   segmentActive: {
     backgroundColor: Colors.heat,
+  },
+  configInput: {
+    backgroundColor: Colors.surface,
+    color: Colors.textPrimary,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    minWidth: 120,
+    textAlign: 'right',
+    fontSize: 14,
   },
 });

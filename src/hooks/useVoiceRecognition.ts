@@ -1,28 +1,43 @@
-import { useState, useCallback, useEffect } from 'react';
-import Voice, { SpeechResultsEvent, SpeechErrorEvent } from '@react-native-voice/voice';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { SpeechRecognitionModule, SpeechEventEmitter } from '@/native/SpeechRecognitionModule';
 
 export function useVoiceRecognition() {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [accuracy, setAccuracy] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const listening = useRef(false);
 
   useEffect(() => {
-    Voice.onSpeechResults = (e: SpeechResultsEvent) => {
-      const result = e.value?.[0] ?? '';
-      setTranscript(result);
-      // Confidence approximated from number of results matched
-      const conf = e.value && e.value.length > 0 ? 0.85 : 0.5;
-      setAccuracy(conf);
-    };
-    Voice.onSpeechError = (e: SpeechErrorEvent) => {
-      setError(e.error?.message ?? 'Speech error');
-      setIsListening(false);
-    };
-    Voice.onSpeechEnd = () => setIsListening(false);
+    const subs = [
+      SpeechEventEmitter.addListener('SpeechStart', () => {
+        listening.current = true;
+        setIsListening(true);
+        setError(null);
+      }),
+      SpeechEventEmitter.addListener('SpeechResults', (e: { value: string[]; confidence: number[] }) => {
+        const best = e.value?.[0] ?? '';
+        const conf = e.confidence?.[0] ?? 0.85;
+        setTranscript(best);
+        setAccuracy(conf);
+      }),
+      SpeechEventEmitter.addListener('SpeechPartialResults', (e: { value: string[] }) => {
+        if (e.value?.[0]) setTranscript(e.value[0]);
+      }),
+      SpeechEventEmitter.addListener('SpeechEnd', () => {
+        listening.current = false;
+        setIsListening(false);
+      }),
+      SpeechEventEmitter.addListener('SpeechError', (e: { message: string }) => {
+        setError(e.message);
+        listening.current = false;
+        setIsListening(false);
+      }),
+    ];
 
     return () => {
-      Voice.destroy().then(Voice.removeAllListeners);
+      subs.forEach((s) => s.remove());
+      SpeechRecognitionModule.destroy().catch(() => {});
     };
   }, []);
 
@@ -31,8 +46,7 @@ export function useVoiceRecognition() {
     setError(null);
     setAccuracy(null);
     try {
-      await Voice.start('en-US');
-      setIsListening(true);
+      await SpeechRecognitionModule.startListening('en-US');
     } catch (e) {
       setError(String(e));
     }
@@ -40,8 +54,9 @@ export function useVoiceRecognition() {
 
   const stopListening = useCallback(async () => {
     try {
-      await Voice.stop();
+      await SpeechRecognitionModule.stopListening();
     } catch {}
+    listening.current = false;
     setIsListening(false);
   }, []);
 

@@ -30,11 +30,6 @@ class AlarmModule(private val reactContext: ReactApplicationContext) :
 
             val am = reactContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !am.canScheduleExactAlarms()) {
-                promise.reject("PERMISSION_DENIED", "SCHEDULE_EXACT_ALARM not granted — direct user to Settings")
-                return
-            }
-
             val intent = Intent(reactContext, AlarmBroadcastReceiver::class.java).apply {
                 putExtra("alarmId", alarmId)
                 putExtra("label", label)
@@ -48,7 +43,14 @@ class AlarmModule(private val reactContext: ReactApplicationContext) :
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            // Use exact alarm if permission available, else fall back to inexact (window-based)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (am.canScheduleExactAlarms()) {
+                    am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMs, pi)
+                } else {
+                    am.setWindow(AlarmManager.RTC_WAKEUP, triggerAtMs, 60_000L, pi)
+                }
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMs, pi)
             } else {
                 am.setExact(AlarmManager.RTC_WAKEUP, triggerAtMs, pi)

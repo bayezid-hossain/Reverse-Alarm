@@ -5,6 +5,7 @@ import {
   ScrollView,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  TouchableOpacity,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { VoltageText } from '@/components/VoltageText';
@@ -12,125 +13,233 @@ import { Colors } from '@/constants/colors';
 import { Spacing } from '@/constants/layout';
 
 interface WheelTimePickerProps {
-  hour: number;
-  minute: number;
+  hour: number;   // 0-23
+  minute: number; // 0-59
   onChange: (hour: number, minute: number) => void;
 }
 
-const ITEM_HEIGHT = 50;
-const HOURS = Array.from({ length: 24 }, (_, i) => i);
+const ITEM_HEIGHT = 56;
+const VISIBLE = 3;
+
+const HOURS_12 = Array.from({ length: 12 }, (_, i) => (i === 0 ? 12 : i));
 const MINUTES = Array.from({ length: 60 }, (_, i) => i);
+
+function to12h(h24: number): { idx: number; isPM: boolean } {
+  const isPM = h24 >= 12;
+  const h12 = h24 % 12;
+  return { idx: h12, isPM };
+}
+
+function to24h(idx: number, isPM: boolean): number {
+  const h12 = idx === 0 ? 12 : idx;
+  if (isPM) return h12 === 12 ? 12 : h12 + 12;
+  return h12 === 12 ? 0 : h12;
+}
 
 export function WheelTimePicker({ hour, minute, onChange }: WheelTimePickerProps) {
   const hourScrollRef = useRef<ScrollView>(null);
   const minuteScrollRef = useRef<ScrollView>(null);
 
+  const { idx: initHourIdx, isPM: initPM } = to12h(hour);
+
+  const currentHourIdx = useRef(initHourIdx);
+  const currentMinute = useRef(minute);
+  const currentIsPM = useRef(initPM);
+
   useEffect(() => {
-    // Initial scroll to current values
     setTimeout(() => {
-      hourScrollRef.current?.scrollTo({ y: hour * ITEM_HEIGHT, animated: false });
+      hourScrollRef.current?.scrollTo({ y: initHourIdx * ITEM_HEIGHT, animated: false });
       minuteScrollRef.current?.scrollTo({ y: minute * ITEM_HEIGHT, animated: false });
     }, 100);
   }, []);
 
-  const handleScroll = (type: 'hour' | 'minute') => (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const y = event.nativeEvent.contentOffset.y;
-    const index = Math.round(y / ITEM_HEIGHT);
-    
-    if (type === 'hour') {
-      if (index >= 0 && index < HOURS.length && index !== hour) {
-        onChange(index, minute);
-        Haptics.selectionAsync();
-      }
-    } else {
-      if (index >= 0 && index < MINUTES.length && index !== minute) {
-        onChange(hour, index);
-        Haptics.selectionAsync();
-      }
+  const handleHourScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const idx = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
+    const clamped = Math.max(0, Math.min(idx, HOURS_12.length - 1));
+    if (clamped !== currentHourIdx.current) {
+      currentHourIdx.current = clamped;
+      Haptics.selectionAsync();
+      onChange(to24h(clamped, currentIsPM.current), currentMinute.current);
     }
   };
 
-  const renderItems = (data: number[]) => {
-    return data.map((item) => (
-      <View key={item} style={styles.item}>
-        <VoltageText
-          variant="display"
-          style={styles.itemText}
-          color={Colors.textPrimary}
-        >
-          {String(item).padStart(2, '0')}
-        </VoltageText>
-      </View>
-    ));
+  const handleMinuteScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const idx = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
+    const clamped = Math.max(0, Math.min(idx, MINUTES.length - 1));
+    if (clamped !== currentMinute.current) {
+      currentMinute.current = clamped;
+      Haptics.selectionAsync();
+      onChange(to24h(currentHourIdx.current, currentIsPM.current), clamped);
+    }
   };
 
+  const toggleAMPM = (pm: boolean) => {
+    if (pm === currentIsPM.current) return;
+    currentIsPM.current = pm;
+    Haptics.selectionAsync();
+    onChange(to24h(currentHourIdx.current, pm), currentMinute.current);
+  };
+
+  const isPM = to12h(hour).isPM;
+
   return (
-    <View style={styles.container}>
-      <View style={styles.highlight} />
-      
-      <View style={styles.wheelWrapper}>
-        <ScrollView
-          ref={hourScrollRef}
-          snapToInterval={ITEM_HEIGHT}
-          decelerationRate="fast"
-          showsVerticalScrollIndicator={false}
-          onMomentumScrollEnd={handleScroll('hour')}
-          contentContainerStyle={styles.listContent}
-        >
-          {renderItems(HOURS)}
-        </ScrollView>
+    <View style={styles.outer}>
+      {/* AM / PM toggle — above wheel, full width, clearly separated */}
+      <View style={styles.ampmRow}>
+        {(['AM', 'PM'] as const).map((label) => {
+          const active = label === 'PM' ? isPM : !isPM;
+          return (
+            <TouchableOpacity
+              key={label}
+              onPress={() => toggleAMPM(label === 'PM')}
+              style={[styles.ampmBtn, active && styles.ampmBtnActive]}
+              activeOpacity={0.7}
+            >
+              <VoltageText
+                variant="label"
+                color={active ? Colors.heat : Colors.textMuted}
+                style={styles.ampmText}
+              >
+                {label}
+              </VoltageText>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
-      <VoltageText variant="display" color={Colors.heat} style={styles.colon}>:</VoltageText>
+      {/* Wheel — overflow hidden, perfectly centered */}
+      <View style={styles.wheelContainer}>
+        {/* Selection highlight behind the center row */}
+        <View style={styles.highlight} pointerEvents="none" />
 
-      <View style={styles.wheelWrapper}>
-        <ScrollView
-          ref={minuteScrollRef}
-          snapToInterval={ITEM_HEIGHT}
-          decelerationRate="fast"
-          showsVerticalScrollIndicator={false}
-          onMomentumScrollEnd={handleScroll('minute')}
-          contentContainerStyle={styles.listContent}
-        >
-          {renderItems(MINUTES)}
-        </ScrollView>
+        {/* Hour column */}
+        <View style={styles.wheelWrapper}>
+          <ScrollView
+            ref={hourScrollRef}
+            snapToInterval={ITEM_HEIGHT}
+            decelerationRate="fast"
+            showsVerticalScrollIndicator={false}
+            onMomentumScrollEnd={handleHourScroll}
+            contentContainerStyle={styles.listContent}
+            nestedScrollEnabled={true}
+          >
+            {HOURS_12.map((h, i) => (
+              <View key={i} style={styles.item}>
+                <VoltageText variant="display" style={styles.itemText} color={Colors.textPrimary}>
+                  {String(h).padStart(2, '0')}
+                </VoltageText>
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Colon — vertically centered in the container */}
+        <View style={styles.colonWrapper}>
+          <VoltageText variant="display" color={Colors.heat} style={styles.colon}>:</VoltageText>
+        </View>
+
+        {/* Minute column */}
+        <View style={styles.wheelWrapper}>
+          <ScrollView
+            ref={minuteScrollRef}
+            snapToInterval={ITEM_HEIGHT}
+            decelerationRate="fast"
+            showsVerticalScrollIndicator={false}
+            onMomentumScrollEnd={handleMinuteScroll}
+            contentContainerStyle={styles.listContent}
+            nestedScrollEnabled={true}
+          >
+            {MINUTES.map((m) => (
+              <View key={m} style={styles.item}>
+                <VoltageText variant="display" style={styles.itemText} color={Colors.textPrimary}>
+                  {String(m).padStart(2, '0')}
+                </VoltageText>
+              </View>
+            ))}
+          </ScrollView>
+        </View>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  outer: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  ampmRow: {
+    flexDirection: 'row',
+    width: 240,
+    marginBottom: Spacing.sm,
+    gap: Spacing.sm,
+  },
+  ampmBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.surfaceMuted,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  ampmBtnActive: {
+    borderColor: Colors.heat,
+    backgroundColor: Colors.surface,
+  },
+  ampmText: {
+    fontSize: 13,
+    letterSpacing: 2,
+  },
+  wheelContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: ITEM_HEIGHT * 3,
+    height: ITEM_HEIGHT * VISIBLE,
     overflow: 'hidden',
-  },
-  wheelWrapper: {
-    height: ITEM_HEIGHT * 3,
-    width: 80,
+    width: 240,
   },
   highlight: {
     position: 'absolute',
+    top: ITEM_HEIGHT,
     height: ITEM_HEIGHT,
-    left: '10%',
-    right: '10%',
+    left: 0,
+    right: 0,
     backgroundColor: Colors.surfaceMuted,
     borderTopWidth: 1,
     borderBottomWidth: 1,
     borderColor: Colors.heat,
   },
+  wheelWrapper: {
+    flex: 1,
+    height: ITEM_HEIGHT * VISIBLE,
+  },
+  colonWrapper: {
+    width: 24,
+    height: ITEM_HEIGHT * VISIBLE,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  colon: {
+    fontSize: 32,
+    lineHeight: ITEM_HEIGHT,
+    textAlignVertical: 'center',
+    includeFontPadding: false,
+  },
   item: {
     height: ITEM_HEIGHT,
+    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
   },
   itemText: {
-    fontSize: 32,
-  },
-  colon: {
-    paddingBottom: 4,
+    fontSize: 38,
+    letterSpacing: 0,
+    textAlign: 'center',
+    width: '100%',
+    lineHeight: ITEM_HEIGHT,
+    textAlignVertical: 'center',
+    includeFontPadding: false,
   },
   listContent: {
     paddingVertical: ITEM_HEIGHT,

@@ -26,6 +26,9 @@ class MainApplication : Application(), ReactApplication {
                     add(WakeLockPackage())
                     add(VolumePackage())
                     add(LockTaskPackage())
+                    add(SpeechRecognitionPackage())
+                    add(StepCounterPackage())
+                    add(ImageAnalysisPackage())
                 }
 
             override fun getJSMainModuleName(): String = "index"

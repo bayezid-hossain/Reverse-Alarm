@@ -158,12 +158,17 @@ class AlarmForegroundService : Service() {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             putExtra("alarmId", alarmId)
         }
-        val stopIntent = Intent(this, AlarmBroadcastReceiver::class.java).apply {
-            action = ACTION_STOP_ALARM
+        val pi = PendingIntent.getActivity(
+            this, 0, launchIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        // "GO TO MISSION" action — same intent as content tap, brings user to mission screen
+        val missionIntent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             putExtra("alarmId", alarmId)
         }
-        val stopPi = PendingIntent.getBroadcast(
-            this, 1, stopIntent,
+        val missionPi = PendingIntent.getActivity(
+            this, 2, missionIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
@@ -173,7 +178,7 @@ class AlarmForegroundService : Service() {
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setContentIntent(pi)
             .setFullScreenIntent(pi, true)
-            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "DEACTIVATE", stopPi)
+            .addAction(android.R.drawable.ic_menu_send, "GO TO MISSION", missionPi)
             .setOngoing(true)
             .setAutoCancel(false)
             .setPriority(NotificationCompat.PRIORITY_MAX)

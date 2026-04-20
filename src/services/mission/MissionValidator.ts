@@ -5,21 +5,21 @@ export const MissionValidator = {
     return count >= target;
   },
 
+  voiceScore(transcript: string, phrase: string): number {
+    if (!transcript) return 0;
+    const t = transcript.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+    const p = phrase.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+    if (t === p) return 1;
+    // Word-level Jaccard — robust to punctuation differences and minor word-order shifts from STT
+    return wordJaccard(t, p);
+  },
+
   validateVoice(
     transcript: string,
     phrase: string,
     threshold: number,
   ): boolean {
-    if (!transcript) return false;
-    const t = transcript.toLowerCase().trim();
-    const p = phrase.toLowerCase().trim();
-
-    // Exact match
-    if (t === p) return true;
-
-    // Levenshtein-based similarity
-    const similarity = stringSimilarity(t, p);
-    return similarity >= threshold;
+    return this.voiceScore(transcript, phrase) >= threshold;
   },
 
   validateColor(
@@ -58,6 +58,15 @@ export const MissionValidator = {
     }
   },
 };
+
+function wordJaccard(a: string, b: string): number {
+  const wa = new Set(a.split(/\s+/).filter(Boolean));
+  const wb = new Set(b.split(/\s+/).filter(Boolean));
+  let intersection = 0;
+  wa.forEach((w) => { if (wb.has(w)) intersection++; });
+  const union = new Set([...wa, ...wb]).size;
+  return union === 0 ? 0 : intersection / union;
+}
 
 /**
  * Simple character-level similarity (0–1).

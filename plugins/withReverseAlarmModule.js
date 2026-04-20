@@ -98,10 +98,10 @@ function withAndroidManifestPatch(config) {
     const services = app.service || [];
     const serviceExists = (name) => services.some((s) => s.$['android:name'] === name);
 
-    if (!serviceExists('.services.AlarmForegroundService')) {
+    if (!serviceExists('.AlarmForegroundService')) {
       services.push({
         $: {
-          'android:name': '.services.AlarmForegroundService',
+          'android:name': '.AlarmForegroundService',
           'android:foregroundServiceType': 'mediaPlayback',
           'android:exported': 'false',
         },
@@ -113,19 +113,19 @@ function withAndroidManifestPatch(config) {
     const receivers = app.receiver || [];
     const receiverExists = (name) => receivers.some((r) => r.$['android:name'] === name);
 
-    if (!receiverExists('.receivers.AlarmBroadcastReceiver')) {
+    if (!receiverExists('.AlarmBroadcastReceiver')) {
       receivers.push({
         $: {
-          'android:name': '.receivers.AlarmBroadcastReceiver',
+          'android:name': '.AlarmBroadcastReceiver',
           'android:exported': 'false',
         },
       });
     }
 
-    if (!receiverExists('.receivers.BootReceiver')) {
+    if (!receiverExists('.BootReceiver')) {
       receivers.push({
         $: {
-          'android:name': '.receivers.BootReceiver',
+          'android:name': '.BootReceiver',
           'android:exported': 'true',
         },
         'intent-filter': [

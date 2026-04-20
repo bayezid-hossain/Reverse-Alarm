@@ -30,13 +30,26 @@ async function handleAlarmTrigger(alarmId: string): Promise<void> {
  * Call once in App.tsx on mount.
  */
 export function subscribeToAlarmEvents(): () => void {
-  const subscription = AlarmEventEmitter.addListener(
+  const triggerSub = AlarmEventEmitter.addListener(
     'AlarmTriggered',
     ({ alarmId }: { alarmId: string }) => {
       handleAlarmTrigger(alarmId);
     }
   );
-  return () => subscription.remove();
+
+  // Notification tapped while app is alive — navigate directly to mission.
+  // Also fires when app was in background and brought to foreground via onNewIntent.
+  const tapSub = AlarmEventEmitter.addListener(
+    'AlarmNotificationTapped',
+    ({ alarmId }: { alarmId: string }) => {
+      navigateToMission(alarmId);
+    }
+  );
+
+  return () => {
+    triggerSub.remove();
+    tapSub.remove();
+  };
 }
 
 /**

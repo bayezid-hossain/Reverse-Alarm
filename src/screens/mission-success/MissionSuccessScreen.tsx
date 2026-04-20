@@ -14,6 +14,7 @@ import { ForegroundServiceModule } from '@/native/ForegroundServiceModule';
 import { WakeLockModule } from '@/native/WakeLockModule';
 import { VolumeModule } from '@/native/VolumeModule';
 import { navigateToHome } from '@/navigation/navigationRef';
+import { AlarmScheduler } from '@/services/alarm/AlarmScheduler';
 
 type Nav = StackNavigationProp<MissionStackParamList>;
 type Route = RouteProp<MissionStackParamList, 'MissionSuccess'>;
@@ -25,14 +26,26 @@ export default function MissionSuccessScreen() {
 
   const resetMission = useStore((s) => s.resetMission);
   const updateAlarm = useStore((s) => s.updateAlarm);
+  const alarms = useStore((s) => s.alarms);
 
   useEffect(() => {
-    // Tear down alarm
     ForegroundServiceModule.stopService().catch(() => {});
     WakeLockModule.release().catch(() => {});
     VolumeModule.restoreVolume().catch(() => {});
-    // Mark alarm as inactive if one-shot
-    updateAlarm(result.alarmId, { status: 'inactive', snoozeCount: 0 });
+
+    const alarm = alarms.find((a) => a.id === result.alarmId);
+    if (alarm?.isOneShot) {
+      updateAlarm(result.alarmId, { status: 'inactive', snoozeCount: 0 });
+    } else if (alarm) {
+      // Recurring — reschedule next occurrence, stay active regardless of schedule success
+      AlarmScheduler.schedule(alarm)
+        .then((nextTriggerAt) => {
+          updateAlarm(result.alarmId, { status: 'active', snoozeCount: 0, nextTriggerAt });
+        })
+        .catch(() => {
+          updateAlarm(result.alarmId, { status: 'active', snoozeCount: 0 });
+        });
+    }
   }, []);
 
   function handleDismiss() {
