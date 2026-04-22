@@ -27,6 +27,14 @@ class AlarmModule(private val reactContext: ReactApplicationContext) :
             val triggerAtMs = params.getDouble("triggerAtMs").toLong()
             val label = params.getString("label") ?: "ALARM"
             val volume = if (params.hasKey("volume")) params.getInt("volume") else 100
+            val isNormal = params.hasKey("isNormal") && params.getBoolean("isNormal")
+            val snoozeIntervalMinutes = if (params.hasKey("snoozeIntervalMinutes")) params.getInt("snoozeIntervalMinutes") else 5
+            val maxSnoozeCount = if (params.hasKey("maxSnoozeCount")) params.getInt("maxSnoozeCount") else 3
+
+            // Persist alarm config extras for use by receiver/service
+            saveAlarmExtras(alarmId, isNormal, snoozeIntervalMinutes, maxSnoozeCount)
+            // Reset snooze count on fresh schedule
+            getPrefs().edit().putInt("snooze_count_$alarmId", 0).apply()
 
             val am = reactContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
@@ -155,6 +163,15 @@ class AlarmModule(private val reactContext: ReactApplicationContext) :
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private fun saveAlarmExtras(alarmId: String, isNormal: Boolean, snoozeIntervalMinutes: Int, maxSnoozeCount: Int) {
+        val json = JSONObject().apply {
+            put("isNormal", isNormal)
+            put("snoozeIntervalMinutes", snoozeIntervalMinutes)
+            put("maxSnoozeCount", maxSnoozeCount)
+        }
+        getPrefs().edit().putString("alarm_extras_$alarmId", json.toString()).apply()
+    }
 
     private fun savePendingAlarm(alarmId: String, triggerAtMs: Long) {
         val prefs = getPrefs()

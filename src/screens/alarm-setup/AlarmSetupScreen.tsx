@@ -66,6 +66,8 @@ export default function AlarmSetupScreen() {
         return { type: 'photo' as const, targetColor: '#fe5e1e', colorToleranceDeltaE: DEFAULT_COLOR_TOLERANCE };
       case 'qr':
         return { type: 'qr' as const, expectedContent: useStore.getState().config.defaultQRContent, matchMode: 'contains' as const };
+      case 'normal':
+        return { type: 'normal' as const };
     }
   }
 

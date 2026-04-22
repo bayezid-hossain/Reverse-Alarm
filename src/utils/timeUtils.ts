@@ -4,7 +4,7 @@ export function formatAlarmTime(hour: number, minute: number): string {
   const h = hour % 12 === 0 ? 12 : hour % 12;
   const m = String(minute).padStart(2, '0');
   const period = hour < 12 ? 'AM' : 'PM';
-  return `${String(h).padStart(2, '0')}:${m}`;
+  return `${String(h).padStart(2, '0')}:${m} ${period}`;
 }
 
 export function formatRepeatDays(days: RepeatDays): string {

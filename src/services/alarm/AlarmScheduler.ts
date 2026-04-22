@@ -56,6 +56,9 @@ export const AlarmScheduler = {
       triggerAtMs,
       label: alarm.label || 'ALARM',
       volume: alarm.volume,
+      isNormal: alarm.taskType === 'normal',
+      snoozeIntervalMinutes: alarm.snoozeIntervalMinutes ?? 5,
+      maxSnoozeCount: alarm.maxSnoozeCount ?? 3,
     });
 
     return triggerAtMs;

@@ -15,6 +15,7 @@ import { WakeLockModule } from '@/native/WakeLockModule';
 import { VolumeModule } from '@/native/VolumeModule';
 import { navigateToHome } from '@/navigation/navigationRef';
 import { AlarmScheduler } from '@/services/alarm/AlarmScheduler';
+import { AlarmModule } from '@/native/AlarmModule';
 
 type Nav = StackNavigationProp<MissionStackParamList>;
 type Route = RouteProp<MissionStackParamList, 'MissionSuccess'>;
@@ -32,6 +33,7 @@ export default function MissionSuccessScreen() {
     ForegroundServiceModule.stopService().catch(() => {});
     WakeLockModule.release().catch(() => {});
     VolumeModule.restoreVolume().catch(() => {});
+    AlarmModule.clearTriggeredAlarm().catch(() => {});
 
     const alarm = alarms.find((a) => a.id === result.alarmId);
     if (alarm?.isOneShot) {

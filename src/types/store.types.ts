@@ -6,6 +6,7 @@ export interface AppConfig {
   defaultVolume: number;       // 0–100
   hapticsEnabled: boolean;
   defaultTaskType: TaskType;
+  defaultNormalSnoozeEnabled: boolean;
   defaultStepTarget: number;
   defaultQRContent: string;
   timePickerStyle: 'wheel' | 'grid';

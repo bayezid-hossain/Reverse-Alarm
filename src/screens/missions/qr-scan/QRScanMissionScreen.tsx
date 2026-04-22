@@ -123,16 +123,19 @@ export default function QRScanMissionScreen() {
             ? scanResult
               ? `SCANNED: ${scanResult.substring(0, 20)}...`
               : 'VALIDATING...'
-            : 'SCANNING FOR QR CODE...'}
+            : `SCANNING FOR: "${taskConfig.expectedContent}"`}
         </VoltageText>
       </View>
 
       <View style={styles.instruction}>
         <VoltageText variant="bodySmall" color={Colors.textSecondary}>
-          Scan a QR code containing: <VoltageText variant="bodySmall" color={Colors.heat}>
-            {taskConfig.expectedContent}
+          MISSION PROTOCOL: Scan a QR code containing the following sequence:
+          {'\n'}
+          <VoltageText variant="h4" color={Colors.heat}>
+            "{taskConfig.expectedContent}"
           </VoltageText>
-          {'\n'}Print this QR code and place it away from your bed (fridge, bathroom, etc.).
+          {'\n'}{'\n'}
+          Print or display this sequence as a QR code and place it away from your sleep area.
         </VoltageText>
       </View>
 

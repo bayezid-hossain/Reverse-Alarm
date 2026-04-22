@@ -18,6 +18,8 @@ export default function RootNavigator() {
         screenOptions={{
           headerShown: false,
           cardStyle: { backgroundColor: Colors.vantablack },
+          gestureEnabled: true,
+          gestureDirection: 'horizontal',
         }}
       >
         <Stack.Screen name="AppNavigator" component={AppNavigator} />

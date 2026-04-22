@@ -34,6 +34,10 @@ class AlarmForegroundService : Service() {
     private var wakeLock: PowerManager.WakeLock? = null
     private var currentAlarmId: String = ""
     private var volumeObserver: ContentObserver? = null
+    private var isNormal: Boolean = false
+    private var snoozeIntervalMinutes: Int = 5
+    private var maxSnoozeCount: Int = 3
+    private var snoozeCount: Int = 0
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -45,14 +49,31 @@ class AlarmForegroundService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        currentAlarmId = intent?.getStringExtra("alarmId") ?: ""
-        val label = intent?.getStringExtra("label") ?: "ALARM"
         val action = intent?.action
 
         if (action == ACTION_STOP_ALARM) {
             stopSelf()
             return START_NOT_STICKY
         }
+
+        // START_STICKY restart with null intent — only continue if alarm is still active
+        if (intent == null) {
+            val prefs = getSharedPreferences("ReverseAlarmPrefs", Context.MODE_PRIVATE)
+            val activeId = prefs.getString("triggered_alarm_id", null)
+            if (activeId.isNullOrEmpty()) {
+                stopSelf()
+                return START_NOT_STICKY
+            }
+            currentAlarmId = activeId
+        } else {
+            currentAlarmId = intent.getStringExtra("alarmId") ?: ""
+            isNormal = intent.getBooleanExtra("isNormal", false)
+            snoozeIntervalMinutes = intent.getIntExtra("snoozeIntervalMinutes", 5)
+            maxSnoozeCount = intent.getIntExtra("maxSnoozeCount", 3)
+            snoozeCount = intent.getIntExtra("snoozeCount", 0)
+        }
+
+        val label = if (intent != null) intent.getStringExtra("label") ?: "ALARM" else "ALARM"
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(
@@ -158,33 +179,66 @@ class AlarmForegroundService : Service() {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             putExtra("alarmId", alarmId)
         }
-        val pi = PendingIntent.getActivity(
+        val contentPi = PendingIntent.getActivity(
             this, 0, launchIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        // "GO TO MISSION" action — same intent as content tap, brings user to mission screen
-        val missionIntent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            putExtra("alarmId", alarmId)
-        }
-        val missionPi = PendingIntent.getActivity(
-            this, 2, missionIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("ALARM — $label")
-            .setContentText("Complete your mission to deactivate.")
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setContentIntent(pi)
-            .setFullScreenIntent(pi, true)
-            .addAction(android.R.drawable.ic_menu_send, "GO TO MISSION", missionPi)
+            .setContentIntent(contentPi)
+            .setFullScreenIntent(contentPi, true)
             .setOngoing(true)
             .setAutoCancel(false)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setVibrate(longArrayOf(0, 500, 200, 500))
+
+        if (isNormal) {
+            builder.setContentTitle("ALARM — $label")
+            builder.setContentText(
+                if (snoozeCount < maxSnoozeCount)
+                    "${maxSnoozeCount - snoozeCount} snooze(s) remaining"
+                else
+                    "No snoozes left — tap to dismiss"
+            )
+
+            if (snoozeCount < maxSnoozeCount) {
+                val snoozeIntent = Intent(this, AlarmBroadcastReceiver::class.java).apply {
+                    action = AlarmBroadcastReceiver.ACTION_SNOOZE
+                    putExtra("alarmId", alarmId)
+                }
+                val snoozePi = PendingIntent.getBroadcast(
+                    this, alarmId.hashCode() + 1, snoozeIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                builder.addAction(android.R.drawable.ic_lock_idle_alarm, "SNOOZE ${snoozeIntervalMinutes}m", snoozePi)
+            }
+
+            val dismissIntent = Intent(this, AlarmBroadcastReceiver::class.java).apply {
+                action = AlarmBroadcastReceiver.ACTION_DISMISS
+                putExtra("alarmId", alarmId)
+            }
+            val dismissPi = PendingIntent.getBroadcast(
+                this, alarmId.hashCode() + 2, dismissIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            builder.addAction(android.R.drawable.ic_delete, "DISMISS", dismissPi)
+        } else {
+            builder.setContentTitle("ALARM — $label")
+            builder.setContentText("Complete your mission to deactivate.")
+
+            val missionIntent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                putExtra("alarmId", alarmId)
+            }
+            val missionPi = PendingIntent.getActivity(
+                this, 2, missionIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            builder.addAction(android.R.drawable.ic_menu_send, "GO TO MISSION", missionPi)
+        }
 
         return builder.build()
     }

@@ -1,4 +1,4 @@
-export type TaskType = 'steps' | 'voice' | 'photo' | 'qr';
+export type TaskType = 'steps' | 'voice' | 'photo' | 'qr' | 'normal';
 
 // --- Config discriminated union ---
 export interface StepTaskConfig {
@@ -25,11 +25,16 @@ export interface QRTaskConfig {
   matchMode: 'exact' | 'prefix' | 'contains';
 }
 
+export interface NormalTaskConfig {
+  type: 'normal';
+}
+
 export type TaskConfig =
   | StepTaskConfig
   | VoiceTaskConfig
   | PhotoTaskConfig
-  | QRTaskConfig;
+  | QRTaskConfig
+  | NormalTaskConfig;
 
 // --- Runtime task interface ---
 export type TaskStatus = 'idle' | 'running' | 'success' | 'failed';

@@ -7,6 +7,9 @@ export interface ScheduleAlarmParams {
   triggerAtMs: number;
   label: string;
   volume: number;
+  isNormal?: boolean;
+  snoozeIntervalMinutes?: number;
+  maxSnoozeCount?: number;
 }
 
 export interface TriggeredAlarm {

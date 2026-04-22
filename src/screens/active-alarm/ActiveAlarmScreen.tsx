@@ -12,6 +12,12 @@ import { PulseIndicator } from '@/components/PulseIndicator';
 import { useStore } from '@/store';
 import { TASK_DISPLAY } from '@/constants/missions';
 import { formatAlarmTime } from '@/utils/timeUtils';
+import { ForegroundServiceModule } from '@/native/ForegroundServiceModule';
+import { WakeLockModule } from '@/native/WakeLockModule';
+import { VolumeModule } from '@/native/VolumeModule';
+import { navigateToHome } from '@/navigation/navigationRef';
+import { AlarmScheduler } from '@/services/alarm/AlarmScheduler';
+import { AlarmModule } from '@/native/AlarmModule';
 
 type Nav = StackNavigationProp<MissionStackParamList>;
 type Route = RouteProp<MissionStackParamList, 'ActiveAlarm'>;
@@ -23,12 +29,12 @@ export default function ActiveAlarmScreen() {
 
   const alarm = useStore((s) => s.alarms.find((a) => a.id === alarmId));
   const startRinging = useStore((s) => s.startRinging);
+  const updateAlarm = useStore((s) => s.updateAlarm);
 
   useEffect(() => {
     startRinging(alarmId);
   }, [alarmId]);
 
-  // Block back button during alarm
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
     return () => sub.remove();
@@ -53,62 +59,151 @@ export default function ActiveAlarmScreen() {
     }
   }
 
-  const taskDisplay = alarm ? TASK_DISPLAY[alarm.taskType] : null;
+  async function stopAlarm() {
+    ForegroundServiceModule.stopService().catch(() => {});
+    WakeLockModule.release().catch(() => {});
+    VolumeModule.restoreVolume().catch(() => {});
+  }
+
+  async function handleDismiss() {
+    if (!alarm) return;
+    await stopAlarm();
+    if (alarm.isOneShot) {
+      updateAlarm(alarmId, { status: 'inactive', snoozeCount: 0 });
+    } else {
+      AlarmScheduler.schedule(alarm)
+        .then((nextTriggerAt) => {
+          updateAlarm(alarmId, { status: 'active', snoozeCount: 0, nextTriggerAt });
+        })
+        .catch(() => {
+          updateAlarm(alarmId, { status: 'active', snoozeCount: 0 });
+        });
+    }
+    navigateToHome();
+  }
+
+  async function handleSnooze() {
+    if (!alarm) return;
+    const snoozeMs = (alarm.snoozeIntervalMinutes ?? 5) * 60 * 1000;
+    const triggerAtMs = Date.now() + snoozeMs;
+    await stopAlarm();
+    await AlarmModule.scheduleAlarm({
+      alarmId: alarm.id,
+      triggerAtMs,
+      label: alarm.label || 'ALARM',
+      volume: alarm.volume,
+      isNormal: true,
+      snoozeIntervalMinutes: alarm.snoozeIntervalMinutes ?? 5,
+      maxSnoozeCount: alarm.maxSnoozeCount ?? 3,
+    });
+    updateAlarm(alarmId, {
+      snoozeCount: (alarm.snoozeCount ?? 0) + 1,
+      nextTriggerAt: triggerAtMs,
+      status: 'active',
+    });
+    navigateToHome();
+  }
+
+  const isNormal = alarm?.taskType === 'normal';
+  const taskDisplay = alarm && !isNormal ? TASK_DISPLAY[alarm.taskType] : null;
   const timeStr = alarm ? formatAlarmTime(alarm.hour, alarm.minute) : '--:--';
+  const canSnooze = alarm ? (alarm.snoozeCount ?? 0) < (alarm.maxSnoozeCount ?? 3) : false;
+  const snoozeMin = alarm?.snoozeIntervalMinutes ?? 5;
 
   return (
     <SafeAreaView style={styles.screen}>
-      {/* Header */}
       <View style={styles.header}>
         <PulseIndicator color={Colors.error} size={10} />
-        <VoltageText variant="label" color={Colors.error}>CRITICAL ALERT</VoltageText>
+        <VoltageText variant="label" color={Colors.error}>
+          {isNormal ? 'ALARM' : 'CRITICAL ALERT'}
+        </VoltageText>
       </View>
 
-      {/* Time */}
       <View style={styles.timeBlock}>
-        <VoltageText variant="display" color={Colors.textPrimary} style={styles.time}>
-          {timeStr}
-        </VoltageText>
-      </View>
-
-      {/* Mission description */}
-      <View style={styles.missionBlock}>
-        <VoltageText variant="h3" color={Colors.warning} style={styles.missionText}>
-          {taskDisplay
-            ? `${taskDisplay.sublabel.toUpperCase()} TO DEACTIVATE`
-            : 'COMPLETE MISSION TO DEACTIVATE'}
-        </VoltageText>
-        {taskDisplay && (
-          <VoltageText variant="body" color={Colors.textSecondary}>
-            {taskDisplay.label}
+        <View style={styles.timeRow}>
+          <VoltageText variant="display" color={Colors.textPrimary} style={styles.time}>
+            {timeStr.split(' ')[0]}
           </VoltageText>
-        )}
-      </View>
-
-      {/* Security status */}
-      <View style={styles.statusGrid}>
-        <View style={styles.statusItem}>
-          <VoltageText variant="caption" color={Colors.textMuted}>LOCK STATE</VoltageText>
-          <VoltageText variant="label" color={Colors.error}>ENGAGED</VoltageText>
-        </View>
-        <View style={styles.statusItem}>
-          <VoltageText variant="caption" color={Colors.textMuted}>AUDIO</VoltageText>
-          <VoltageText variant="label" color={Colors.warning}>MAX VOLUME</VoltageText>
-        </View>
-        <View style={styles.statusItem}>
-          <VoltageText variant="caption" color={Colors.textMuted}>BYPASS</VoltageText>
-          <VoltageText variant="label" color={Colors.textMuted}>DISABLED</VoltageText>
+          {timeStr.includes(' ') && (
+            <VoltageText variant="h2" color={Colors.heat} style={styles.period}>
+              {timeStr.split(' ')[1]}
+            </VoltageText>
+          )}
         </View>
       </View>
 
-      {/* CTA */}
-      <View style={styles.cta}>
-        <VoltageButton
-          label="START MISSION"
-          fullWidth
-          onPress={handleStartMission}
-        />
-      </View>
+      {isNormal ? (
+        /* ── Normal alarm UI ─────────────────────────────── */
+        <>
+          <View style={styles.missionBlock}>
+            <VoltageText variant="h3" color={Colors.textPrimary}>
+              {alarm?.label || 'ALARM'}
+            </VoltageText>
+            {canSnooze ? (
+              <VoltageText variant="body" color={Colors.textSecondary}>
+                {(alarm?.maxSnoozeCount ?? 3) - (alarm?.snoozeCount ?? 0)} snooze{((alarm?.maxSnoozeCount ?? 3) - (alarm?.snoozeCount ?? 0)) !== 1 ? 's' : ''} remaining
+              </VoltageText>
+            ) : (
+              <VoltageText variant="body" color={Colors.error}>NO SNOOZES LEFT</VoltageText>
+            )}
+          </View>
+
+          <View style={styles.cta}>
+            {canSnooze && (
+              <VoltageButton
+                label={`SNOOZE ${snoozeMin}m`}
+                fullWidth
+                onPress={handleSnooze}
+                style={styles.snoozeBtn}
+              />
+            )}
+            <VoltageButton
+              label="DISMISS"
+              fullWidth
+              onPress={handleDismiss}
+            />
+          </View>
+        </>
+      ) : (
+        /* ── Mission alarm UI ────────────────────────────── */
+        <>
+          <View style={styles.missionBlock}>
+            <VoltageText variant="h3" color={Colors.warning} style={styles.missionText}>
+              {taskDisplay
+                ? `${taskDisplay.sublabel.toUpperCase()} TO DEACTIVATE`
+                : 'COMPLETE MISSION TO DEACTIVATE'}
+            </VoltageText>
+            {taskDisplay && (
+              <VoltageText variant="body" color={Colors.textSecondary}>
+                {taskDisplay.label}
+              </VoltageText>
+            )}
+          </View>
+
+          <View style={styles.statusGrid}>
+            <View style={styles.statusItem}>
+              <VoltageText variant="caption" color={Colors.textMuted}>LOCK STATE</VoltageText>
+              <VoltageText variant="label" color={Colors.error}>ENGAGED</VoltageText>
+            </View>
+            <View style={styles.statusItem}>
+              <VoltageText variant="caption" color={Colors.textMuted}>AUDIO</VoltageText>
+              <VoltageText variant="label" color={Colors.warning}>MAX VOLUME</VoltageText>
+            </View>
+            <View style={styles.statusItem}>
+              <VoltageText variant="caption" color={Colors.textMuted}>BYPASS</VoltageText>
+              <VoltageText variant="label" color={Colors.textMuted}>DISABLED</VoltageText>
+            </View>
+          </View>
+
+          <View style={styles.cta}>
+            <VoltageButton
+              label="START MISSION"
+              fullWidth
+              onPress={handleStartMission}
+            />
+          </View>
+        </>
+      )}
     </SafeAreaView>
   );
 }
@@ -130,9 +225,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: Spacing.xxl,
   },
+  timeRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: Spacing.sm,
+  },
   time: {
     fontSize: 96,
     lineHeight: 96,
+  },
+  period: {
+    marginBottom: 12,
   },
   missionBlock: {
     backgroundColor: Colors.surface,
@@ -156,5 +259,9 @@ const styles = StyleSheet.create({
   },
   cta: {
     marginTop: 'auto',
+    gap: Spacing.sm,
+  },
+  snoozeBtn: {
+    backgroundColor: Colors.surfaceMuted,
   },
 });

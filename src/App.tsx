@@ -1,7 +1,9 @@
 import React, { useEffect } from 'react';
+import { AppState } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useStore } from '@/store';
 import { subscribeToAlarmEvents, checkPendingAlarmTrigger } from '@/services/alarm/AlarmReceiver';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -30,18 +32,28 @@ export default function App() {
       checkPendingAlarmTrigger();
     }, 500);
 
+    // Re-check when app comes to foreground (alarm may have fired while backgrounded)
+    const appStateSub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        checkPendingAlarmTrigger();
+      }
+    });
+
     return () => {
       unsubscribe();
       clearTimeout(timer);
+      appStateSub.remove();
     };
   }, []);
 
   if (!fontsLoaded) return null;
 
   return (
-    <SafeAreaProvider>
-      <StatusBar style="light" backgroundColor="#0e0e0e" />
-      <RootNavigator />
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <StatusBar style="light" backgroundColor="#0e0e0e" />
+        <RootNavigator />
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

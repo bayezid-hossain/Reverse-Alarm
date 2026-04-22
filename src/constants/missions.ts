@@ -1,6 +1,6 @@
 import { TaskType } from '@/types/task.types';
 
-export const TASK_TYPES: TaskType[] = ['steps', 'voice', 'photo', 'qr'];
+export const TASK_TYPES: TaskType[] = ['normal', 'steps', 'voice', 'photo', 'qr'];
 
 export const TASK_DISPLAY = {
   steps: {
@@ -23,9 +23,14 @@ export const TASK_DISPLAY = {
     sublabel: 'Scan your QR terminal',
     icon: 'qr_code_scanner',
   },
+  normal: {
+    label: 'NORMAL ALARM',
+    sublabel: 'Snooze or dismiss',
+    icon: 'alarm',
+  },
 } as const;
 
-export const DEFAULT_STEP_TARGET = 50;
+export const DEFAULT_STEP_TARGET = 30;
 export const VOICE_MANIFESTOS = [
   'I am the CEO of my own existence, and the coffee is my assistant. Today’s quarterly report indicates a 100% chance of greatness. Let the productivity begin.',
   'My bed is a time machine to breakfast, and I just landed. The engine is warm, the cargo is hunger, and the destination is delicious. Mission control, we are clear for omelets.',
@@ -73,4 +78,5 @@ export const DEFAULT_TASK_CONFIGS = {
   voice: { type: 'voice' as const, phrase: DEFAULT_VOICE_PHRASE, matchThreshold: DEFAULT_VOICE_THRESHOLD },
   photo: { type: 'photo' as const, targetColor: '#fe5e1e', colorToleranceDeltaE: DEFAULT_COLOR_TOLERANCE },
   qr: { type: 'qr' as const, expectedContent: 'REVERSE_ALARM_QR', matchMode: 'contains' as const },
+  normal: { type: 'normal' as const },
 };

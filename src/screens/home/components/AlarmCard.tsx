@@ -24,7 +24,12 @@ export function AlarmCard({ alarm, onToggle, onPress, onDelete }: AlarmCardProps
       <VoltageCard accent={isArmed} style={styles.card}>
         <View style={styles.row}>
           <View style={styles.timeBlock}>
-            <VoltageText variant="h2">{formatAlarmTime(alarm.hour, alarm.minute)}</VoltageText>
+            <View style={styles.timeRow}>
+              <VoltageText variant="h2">{formatAlarmTime(alarm.hour, alarm.minute).split(' ')[0]}</VoltageText>
+              <VoltageText variant="caption" color={Colors.textSecondary} style={styles.period}>
+                {formatAlarmTime(alarm.hour, alarm.minute).split(' ')[1]}
+              </VoltageText>
+            </View>
             <VoltageText variant="caption" color={Colors.textSecondary}>
               {formatRepeatDays(alarm.repeatDays)}
             </VoltageText>
@@ -71,6 +76,14 @@ const styles = StyleSheet.create({
   },
   timeBlock: {
     gap: 2,
+  },
+  timeRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: Spacing.xs,
+  },
+  period: {
+    marginBottom: 4, // Slight nudge to align better with large text baseline
   },
   right: {
     alignItems: 'flex-end',
