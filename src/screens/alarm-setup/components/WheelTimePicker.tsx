@@ -24,6 +24,19 @@ const VISIBLE = 3;
 const HOURS_12 = Array.from({ length: 12 }, (_, i) => (i === 0 ? 12 : i));
 const MINUTES = Array.from({ length: 60 }, (_, i) => i);
 
+// Spacer count = half of VISIBLE rows so first/last items snap to center
+const SPACERS = Math.floor(VISIBLE / 2); // 1
+const PADDED_HOURS: (number | null)[] = [
+  ...Array(SPACERS).fill(null),
+  ...HOURS_12,
+  ...Array(SPACERS).fill(null),
+];
+const PADDED_MINUTES: (number | null)[] = [
+  ...Array(SPACERS).fill(null),
+  ...MINUTES,
+  ...Array(SPACERS).fill(null),
+];
+
 function to12h(h24: number): { idx: number; isPM: boolean } {
   const isPM = h24 >= 12;
   const h12 = h24 % 12;
@@ -123,11 +136,13 @@ export function WheelTimePicker({ hour, minute, onChange }: WheelTimePickerProps
             contentContainerStyle={styles.listContent}
             nestedScrollEnabled={true}
           >
-            {HOURS_12.map((h, i) => (
+            {PADDED_HOURS.map((h, i) => (
               <View key={i} style={styles.item}>
-                <VoltageText variant="display" style={styles.itemText} color={Colors.textPrimary}>
-                  {String(h).padStart(2, '0')}
-                </VoltageText>
+                {h !== null && (
+                  <VoltageText variant="display" style={styles.itemText} color={Colors.textPrimary}>
+                    {String(h).padStart(2, '0')}
+                  </VoltageText>
+                )}
               </View>
             ))}
           </ScrollView>
@@ -149,11 +164,13 @@ export function WheelTimePicker({ hour, minute, onChange }: WheelTimePickerProps
             contentContainerStyle={styles.listContent}
             nestedScrollEnabled={true}
           >
-            {MINUTES.map((m) => (
-              <View key={m} style={styles.item}>
-                <VoltageText variant="display" style={styles.itemText} color={Colors.textPrimary}>
-                  {String(m).padStart(2, '0')}
-                </VoltageText>
+            {PADDED_MINUTES.map((m, i) => (
+              <View key={i} style={styles.item}>
+                {m !== null && (
+                  <VoltageText variant="display" style={styles.itemText} color={Colors.textPrimary}>
+                    {String(m).padStart(2, '0')}
+                  </VoltageText>
+                )}
               </View>
             ))}
           </ScrollView>
@@ -242,6 +259,6 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
   },
   listContent: {
-    paddingVertical: ITEM_HEIGHT,
+    paddingVertical: 0,
   },
 });

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   FlatList,
@@ -18,6 +18,8 @@ import { AlarmCard } from './components/AlarmCard';
 import { SystemStatusHeader } from './components/SystemStatusHeader';
 import { VoltageText } from '@/components/VoltageText';
 import { useAlarms } from '@/hooks/useAlarms';
+import { DeleteAlarmModal } from './components/DeleteAlarmModal';
+import { Alarm } from '@/types/alarm.types';
 
 type Nav = StackNavigationProp<RootStackParamList>;
 
@@ -26,16 +28,17 @@ export default function HomeScreen() {
   const alarms = useStore((s) => s.alarms);
   const loadAlarms = useStore((s) => s.loadAlarms);
   const { toggleAlarm, deleteAlarm } = useAlarms();
+  const [deletingAlarm, setDeletingAlarm] = useState<Alarm | null>(null);
 
   useEffect(() => {
     loadAlarms();
   }, []);
 
-  function handleDelete(id: string) {
-    Alert.alert('DELETE ALARM', 'Decommission this wait-state?', [
-      { text: 'CANCEL', style: 'cancel' },
-      { text: 'CONFIRM', style: 'destructive', onPress: () => deleteAlarm(id) },
-    ]);
+  function handleDelete() {
+    if (deletingAlarm) {
+      deleteAlarm(deletingAlarm.id);
+      setDeletingAlarm(null);
+    }
   }
 
   return (
@@ -59,7 +62,7 @@ export default function HomeScreen() {
             alarm={item}
             onToggle={() => toggleAlarm(item.id)}
             onPress={() => navigation.navigate('AlarmSetup', { alarmId: item.id })}
-            onDelete={() => handleDelete(item.id)}
+            onDelete={() => setDeletingAlarm(item)}
           />
         )}
         contentContainerStyle={styles.list}
@@ -85,6 +88,13 @@ export default function HomeScreen() {
           +
         </VoltageText>
       </TouchableOpacity>
+
+      <DeleteAlarmModal
+        visible={!!deletingAlarm}
+        alarm={deletingAlarm}
+        onClose={() => setDeletingAlarm(null)}
+        onConfirm={handleDelete}
+      />
     </SafeAreaView>
   );
 }
