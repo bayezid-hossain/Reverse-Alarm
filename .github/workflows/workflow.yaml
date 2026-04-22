@@ -39,36 +39,37 @@ jobs:
 
       - name: Inject Gradle Signing Config
         run: |
-          node -e "
-            const fs = require('fs');
-            const path = 'android/app/build.gradle';
-            let content = fs.readFileSync(path, 'utf8');
+          node << 'EOF'
+          const fs = require('fs');
+          const gradlePath = 'android/app/build.gradle';
+          let content = fs.readFileSync(gradlePath, 'utf8');
 
-            const signingBlock = \`
-        signingConfigs {
-            release {
-                storeFile file('release.jks')
-                storePassword System.getenv('KEYSTORE_PASSWORD')
-                keyAlias System.getenv('KEYSTORE_ALIAS')
-                keyPassword System.getenv('KEY_PASSWORD')
-            }
-        }\`;
+          const signingBlock = [
+            '    signingConfigs {',
+            '        release {',
+            "            storeFile file('release.jks')",
+            "            storePassword System.getenv('KEYSTORE_PASSWORD')",
+            "            keyAlias System.getenv('KEYSTORE_ALIAS')",
+            "            keyPassword System.getenv('KEY_PASSWORD')",
+            '        }',
+            '    }'
+          ].join('\n');
 
-            // Insert signingConfigs before buildTypes
-            content = content.replace(
-                /(\s*buildTypes\s*\{)/,
-                signingBlock + '\$1'
-            );
+          // Insert signingConfigs block before buildTypes
+          content = content.replace(
+            /(\s*buildTypes\s*\{)/,
+            '\n' + signingBlock + '\n$1'
+          );
 
-            // Wire release buildType to use signingConfig
-            content = content.replace(
-                /(buildTypes\s*\{[^}]*release\s*\{)/,
-                '\$1\n            signingConfig signingConfigs.release'
-            );
+          // Wire release buildType to the signingConfig
+          content = content.replace(
+            /(buildTypes\s*\{[^}]*release\s*\{)/,
+            '$1\n            signingConfig signingConfigs.release'
+          );
 
-            fs.writeFileSync(path, content);
-            console.log('Signing config injected.');
-          "
+          fs.writeFileSync(gradlePath, content);
+          console.log('Signing config injected.');
+          EOF
 
       - name: Make Gradle Executable
         run: chmod +x android/gradlew
