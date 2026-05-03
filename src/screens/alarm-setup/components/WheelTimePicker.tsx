@@ -67,8 +67,14 @@ export function WheelTimePicker({ hour, minute, onChange }: WheelTimePickerProps
   }, []);
 
   const handleHourScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const idx = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
+    const y = e.nativeEvent.contentOffset.y;
+    const idx = Math.round(y / ITEM_HEIGHT);
     const clamped = Math.max(0, Math.min(idx, HOURS_12.length - 1));
+    const exactY = clamped * ITEM_HEIGHT;
+    // Force exact pixel alignment if native snap was imprecise
+    if (Math.abs(y - exactY) > 1) {
+      hourScrollRef.current?.scrollTo({ y: exactY, animated: false });
+    }
     if (clamped !== currentHourIdx.current) {
       currentHourIdx.current = clamped;
       Haptics.selectionAsync();
@@ -77,8 +83,14 @@ export function WheelTimePicker({ hour, minute, onChange }: WheelTimePickerProps
   };
 
   const handleMinuteScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const idx = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
+    const y = e.nativeEvent.contentOffset.y;
+    const idx = Math.round(y / ITEM_HEIGHT);
     const clamped = Math.max(0, Math.min(idx, MINUTES.length - 1));
+    const exactY = clamped * ITEM_HEIGHT;
+    // Force exact pixel alignment if native snap was imprecise
+    if (Math.abs(y - exactY) > 1) {
+      minuteScrollRef.current?.scrollTo({ y: exactY, animated: false });
+    }
     if (clamped !== currentMinute.current) {
       currentMinute.current = clamped;
       Haptics.selectionAsync();
@@ -130,8 +142,11 @@ export function WheelTimePicker({ hour, minute, onChange }: WheelTimePickerProps
           <ScrollView
             ref={hourScrollRef}
             snapToInterval={ITEM_HEIGHT}
+            snapToAlignment="start"
+            disableIntervalMomentum={true}
             decelerationRate="fast"
             showsVerticalScrollIndicator={false}
+            overScrollMode="never"
             onMomentumScrollEnd={handleHourScroll}
             contentContainerStyle={styles.listContent}
             nestedScrollEnabled={true}
@@ -158,8 +173,11 @@ export function WheelTimePicker({ hour, minute, onChange }: WheelTimePickerProps
           <ScrollView
             ref={minuteScrollRef}
             snapToInterval={ITEM_HEIGHT}
+            snapToAlignment="start"
+            disableIntervalMomentum={true}
             decelerationRate="fast"
             showsVerticalScrollIndicator={false}
+            overScrollMode="never"
             onMomentumScrollEnd={handleMinuteScroll}
             contentContainerStyle={styles.listContent}
             nestedScrollEnabled={true}
