@@ -13,6 +13,7 @@ interface CreateAlarmParams {
   taskConfig: TaskConfig;
   label: string;
   isOneShot: boolean;
+  ringtoneUri?: string | null;
 }
 
 export function useAlarms() {
@@ -40,6 +41,7 @@ export function useAlarms() {
       snoozeCount: 0,
       maxSnoozeCount: config.maxSnoozes,
       snoozeIntervalMinutes: config.defaultSnoozeMinutes,
+      ringtoneUri: params.ringtoneUri ?? null,
     };
 
     // Schedule native alarm

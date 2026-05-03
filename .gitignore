@@ -38,3 +38,4 @@ tsc_errors.txt
 
 # Metro
 .metro-health-check*
+*.txt

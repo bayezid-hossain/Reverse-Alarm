@@ -29,6 +29,7 @@ class MainApplication : Application(), ReactApplication {
                     add(SpeechRecognitionPackage())
                     add(StepCounterPackage())
                     add(ImageAnalysisPackage())
+                    add(RingtonePackage())
                 }
 
             override fun getJSMainModuleName(): String = "index"

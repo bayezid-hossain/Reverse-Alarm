@@ -59,6 +59,7 @@ export const AlarmScheduler = {
       isNormal: alarm.taskType === 'normal',
       snoozeIntervalMinutes: alarm.snoozeIntervalMinutes ?? 5,
       maxSnoozeCount: alarm.maxSnoozeCount ?? 3,
+      ringtoneUri: alarm.ringtoneUri ?? null,
     });
 
     return triggerAtMs;

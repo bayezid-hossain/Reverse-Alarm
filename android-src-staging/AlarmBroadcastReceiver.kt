@@ -36,9 +36,11 @@ class AlarmBroadcastReceiver : BroadcastReceiver() {
 
         // Read stored extras
         val extrasJson = prefs.getString("alarm_extras_$alarmId", null)
-        val isNormal = extrasJson?.let { JSONObject(it).optBoolean("isNormal", false) } ?: false
-        val snoozeIntervalMinutes = extrasJson?.let { JSONObject(it).optInt("snoozeIntervalMinutes", 5) } ?: 5
-        val maxSnoozeCount = extrasJson?.let { JSONObject(it).optInt("maxSnoozeCount", 3) } ?: 3
+        val extras = extrasJson?.let { JSONObject(it) }
+        val isNormal = extras?.optBoolean("isNormal", false) ?: false
+        val snoozeIntervalMinutes = extras?.optInt("snoozeIntervalMinutes", 5) ?: 5
+        val maxSnoozeCount = extras?.optInt("maxSnoozeCount", 3) ?: 3
+        val ringtoneUri = extras?.optString("ringtoneUri", null)
         val snoozeCount = prefs.getInt("snooze_count_$alarmId", 0)
 
         val serviceIntent = Intent(context, AlarmForegroundService::class.java).apply {
@@ -48,6 +50,7 @@ class AlarmBroadcastReceiver : BroadcastReceiver() {
             putExtra("snoozeIntervalMinutes", snoozeIntervalMinutes)
             putExtra("maxSnoozeCount", maxSnoozeCount)
             putExtra("snoozeCount", snoozeCount)
+            if (!ringtoneUri.isNullOrEmpty()) putExtra("ringtoneUri", ringtoneUri)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.startForegroundService(serviceIntent)

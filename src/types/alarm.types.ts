@@ -29,4 +29,5 @@ export interface Alarm {
   snoozeCount: number;
   maxSnoozeCount: number;
   snoozeIntervalMinutes: number;
+  ringtoneUri: string | null;
 }

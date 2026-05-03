@@ -38,6 +38,7 @@ class AlarmForegroundService : Service() {
     private var snoozeIntervalMinutes: Int = 5
     private var maxSnoozeCount: Int = 3
     private var snoozeCount: Int = 0
+    private var ringtoneUri: String? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -71,6 +72,7 @@ class AlarmForegroundService : Service() {
             snoozeIntervalMinutes = intent.getIntExtra("snoozeIntervalMinutes", 5)
             maxSnoozeCount = intent.getIntExtra("maxSnoozeCount", 3)
             snoozeCount = intent.getIntExtra("snoozeCount", 0)
+            ringtoneUri = intent.getStringExtra("ringtoneUri")
         }
 
         val label = if (intent != null) intent.getStringExtra("label") ?: "ALARM" else "ALARM"
@@ -114,8 +116,9 @@ class AlarmForegroundService : Service() {
                         .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                         .build()
                 )
-                val alarmUri = Settings.System.DEFAULT_ALARM_ALERT_URI
-                setDataSource(this@AlarmForegroundService, alarmUri)
+                val uri = if (!ringtoneUri.isNullOrEmpty()) android.net.Uri.parse(ringtoneUri)
+                          else Settings.System.DEFAULT_ALARM_ALERT_URI
+                setDataSource(this@AlarmForegroundService, uri)
                 isLooping = true
                 prepare()
                 start()

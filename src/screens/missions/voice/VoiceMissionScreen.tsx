@@ -36,7 +36,7 @@ export default function VoiceMissionScreen() {
   const { taskConfig, alarmId } = route.params;
   const [activePhrase] = useState(getRandomVoicePhrase());
 
-  const { isListening, transcript, accuracy, error, startListening, stopListening } =
+  const { isListening, transcript, error, startListening, stopListening } =
     useVoiceRecognition();
   const { micPermission, requestMic } = usePermissions();
   const missionStartedAt = useStore((s) => s.missionStartedAt);
@@ -93,7 +93,7 @@ export default function VoiceMissionScreen() {
       const result = buildMissionResult(alarmId, 'voice', {
         timeToWakeMs: Date.now() - (missionStartedAt ?? Date.now()),
         taskAttempts,
-        voiceAccuracy: accuracy,
+        voiceAccuracy: score,
         stepsRecorded: null,
       });
       navigation.replace('MissionSuccess', { result });

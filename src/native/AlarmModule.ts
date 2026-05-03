@@ -10,6 +10,7 @@ export interface ScheduleAlarmParams {
   isNormal?: boolean;
   snoozeIntervalMinutes?: number;
   maxSnoozeCount?: number;
+  ringtoneUri?: string | null;
 }
 
 export interface TriggeredAlarm {

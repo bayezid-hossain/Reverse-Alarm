@@ -6,6 +6,9 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
+  Modal,
+  FlatList,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -17,8 +20,6 @@ import { Colors } from '@/constants/colors';
 import { Spacing } from '@/constants/layout';
 import { Fonts } from '@/constants/typography';
 import {
-  DEFAULT_STEP_TARGET,
-  DEFAULT_VOICE_PHRASE,
   DEFAULT_VOICE_THRESHOLD,
   DEFAULT_COLOR_TOLERANCE,
   TASK_TYPES,
@@ -32,10 +33,20 @@ import { TaskTypeCard } from './components/TaskTypeCard';
 import { useAlarms } from '@/hooks/useAlarms';
 import { useKeyboard } from '@/hooks/useKeyboard';
 import { useStore } from '@/store';
+import { RingtoneModule, RingtoneInfo } from '@/native/RingtoneModule';
+import { check, request, PERMISSIONS, RESULTS, openSettings } from 'react-native-permissions';
 
 const DEFAULT_REPEAT: RepeatDays = {
   monday: true, tuesday: true, wednesday: true,
   thursday: true, friday: true, saturday: false, sunday: false,
+};
+
+// Maps task types that require a runtime permission
+const TASK_PERMISSION: Partial<Record<TaskType, { permission: any; label: string }>> = {
+  steps: { permission: PERMISSIONS.ANDROID.ACTIVITY_RECOGNITION, label: 'Physical Activity' },
+  voice: { permission: PERMISSIONS.ANDROID.RECORD_AUDIO,          label: 'Microphone' },
+  photo: { permission: PERMISSIONS.ANDROID.CAMERA,                label: 'Camera' },
+  qr:    { permission: PERMISSIONS.ANDROID.CAMERA,                label: 'Camera' },
 };
 
 type Nav = StackNavigationProp<RootStackParamList>;
@@ -56,6 +67,74 @@ export default function AlarmSetupScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const { isKeyboardShown, keyboardHeight } = useKeyboard();
 
+  // Which task types currently have their required permission granted
+  const [grantedTypes, setGrantedTypes] = useState<Set<TaskType>>(new Set());
+
+  // Ringtone state
+  const [ringtones, setRingtones] = useState<RingtoneInfo[]>([]);
+  const [selectedRingtone, setSelectedRingtone] = useState<RingtoneInfo | null>(null);
+  const [showRingtonePicker, setShowRingtonePicker] = useState(false);
+  const [loadingRingtones, setLoadingRingtones] = useState(false);
+  const [playingUri, setPlayingUri] = useState<string | null>(null);
+
+  // Check all permissions on mount
+  useEffect(() => {
+    async function checkAll() {
+      const granted = new Set<TaskType>();
+      for (const [type, cfg] of Object.entries(TASK_PERMISSION) as [TaskType, { permission: any }][]) {
+        const result = await check(cfg.permission);
+        if (result === RESULTS.GRANTED) granted.add(type);
+      }
+      // Types with no required permission are always granted
+      granted.add('normal');
+      setGrantedTypes(granted);
+    }
+    checkAll();
+  }, []);
+
+  useEffect(() => {
+    setLoadingRingtones(true);
+    RingtoneModule.getAlarmRingtones()
+      .then((list) => {
+        setRingtones(list);
+        if (existing?.ringtoneUri) {
+          const match = list.find((r) => r.uri === existing.ringtoneUri);
+          if (match) setSelectedRingtone(match);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingRingtones(false));
+  }, []);
+
+  // Called when user taps a task type card
+  async function handleTaskTypePress(type: TaskType) {
+    const cfg = TASK_PERMISSION[type];
+
+    // No permission required (normal alarm) or already granted → select immediately
+    if (!cfg || grantedTypes.has(type)) {
+      setTaskType(type);
+      return;
+    }
+
+    // Request permission
+    const result = await request(cfg.permission);
+    if (result === RESULTS.GRANTED) {
+      setGrantedTypes((prev) => new Set([...prev, type]));
+      setTaskType(type);
+      return;
+    }
+
+    // Blocked or denied — offer settings link
+    Alert.alert(
+      'PERMISSION REQUIRED',
+      `${cfg.label} permission is needed for this mission. Enable it in device settings.`,
+      [
+        { text: 'CANCEL', style: 'cancel' },
+        { text: 'OPEN SETTINGS', onPress: () => openSettings() },
+      ]
+    );
+  }
+
   function buildTaskConfig() {
     switch (taskType) {
       case 'steps':
@@ -74,13 +153,13 @@ export default function AlarmSetupScreen() {
   async function handleSave() {
     const taskConfig = buildTaskConfig();
     const hasAnyDay = Object.values(repeatDays).some(Boolean);
-
     setIsSaving(true);
     try {
+      const ringtoneUri = selectedRingtone?.uri ?? null;
       if (alarmId && existing) {
-        await editAlarm(alarmId, { hour, minute, repeatDays, taskType, taskConfig, label, isOneShot: !hasAnyDay });
+        await editAlarm(alarmId, { hour, minute, repeatDays, taskType, taskConfig, label, isOneShot: !hasAnyDay, ringtoneUri });
       } else {
-        await createAlarm({ hour, minute, repeatDays, taskType, taskConfig, label, isOneShot: !hasAnyDay });
+        await createAlarm({ hour, minute, repeatDays, taskType, taskConfig, label, isOneShot: !hasAnyDay, ringtoneUri });
       }
       navigation.goBack();
     } catch (error) {
@@ -91,10 +170,30 @@ export default function AlarmSetupScreen() {
     }
   }
 
+  function handleRingtoneSelect(ringtone: RingtoneInfo) {
+    RingtoneModule.stopPreview().catch(() => {});
+    setSelectedRingtone(ringtone);
+    setShowRingtonePicker(false);
+  }
+
+  function handleRingtonePreview(ringtone: RingtoneInfo) {
+    if (playingUri === ringtone.uri) {
+      RingtoneModule.stopPreview().catch(() => {});
+      setPlayingUri(null);
+    } else {
+      RingtoneModule.stopPreview().catch(() => {});
+      RingtoneModule.playPreview(ringtone.uri);
+      setPlayingUri(ringtone.uri);
+    }
+  }
+
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => {
+          RingtoneModule.stopPreview().catch(() => {});
+          navigation.goBack();
+        }}>
           <VoltageText variant="label" color={Colors.textMuted}>← BACK</VoltageText>
         </TouchableOpacity>
         <VoltageText variant="h4">
@@ -103,14 +202,13 @@ export default function AlarmSetupScreen() {
         <View style={{ width: 60 }} />
       </View>
 
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={[
           styles.content,
           isKeyboardShown && { paddingBottom: keyboardHeight + Spacing.md }
         ]}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Time Picker */}
         <View style={styles.section}>
           <VoltageText variant="label" color={Colors.textSecondary} style={styles.sectionLabel}>
             TRIGGER TIME
@@ -122,7 +220,6 @@ export default function AlarmSetupScreen() {
           />
         </View>
 
-        {/* Day Selector */}
         <View style={styles.section}>
           <VoltageText variant="label" color={Colors.textSecondary} style={styles.sectionLabel}>
             REPEAT SCHEDULE
@@ -130,24 +227,46 @@ export default function AlarmSetupScreen() {
           <DaySelector value={repeatDays} onChange={setRepeatDays} />
         </View>
 
-        {/* Task Type */}
         <View style={styles.section}>
           <VoltageText variant="label" color={Colors.textSecondary} style={styles.sectionLabel}>
             DEACTIVATION MISSION
           </VoltageText>
           <View style={styles.taskGrid}>
-            {TASK_TYPES.map((t) => (
-              <TaskTypeCard
-                key={t}
-                type={t}
-                selected={taskType === t}
-                onPress={() => setTaskType(t)}
-              />
-            ))}
+            {TASK_TYPES.map((t) => {
+              const needsPerm = !!TASK_PERMISSION[t];
+              const disabled = needsPerm && !grantedTypes.has(t);
+              return (
+                <TaskTypeCard
+                  key={t}
+                  type={t}
+                  selected={taskType === t}
+                  disabled={disabled}
+                  onPress={() => handleTaskTypePress(t)}
+                />
+              );
+            })}
           </View>
         </View>
 
-        {/* Label */}
+        <View style={styles.section}>
+          <VoltageText variant="label" color={Colors.textSecondary} style={styles.sectionLabel}>
+            RINGTONE
+          </VoltageText>
+          <TouchableOpacity
+            style={styles.ringtoneRow}
+            onPress={() => setShowRingtonePicker(true)}
+            activeOpacity={0.7}
+          >
+            <VoltageText variant="body" color={Colors.textPrimary} style={styles.ringtoneName}>
+              {selectedRingtone?.title ?? 'System Default'}
+            </VoltageText>
+            {loadingRingtones
+              ? <ActivityIndicator size="small" color={Colors.heat} />
+              : <VoltageText variant="caption" color={Colors.heat}>CHANGE</VoltageText>
+            }
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.section}>
           <VoltageText variant="label" color={Colors.textSecondary} style={styles.sectionLabel}>
             LABEL (OPTIONAL)
@@ -162,7 +281,6 @@ export default function AlarmSetupScreen() {
           />
         </View>
 
-        {/* Warning */}
         <View style={styles.warning}>
           <VoltageText variant="caption" color={Colors.textMuted}>
             FAILURE TO COMPLETE THE DEACTIVATION MISSION WILL ESCALATE ALARM VOLUME EVERY 30 SECONDS.
@@ -177,6 +295,68 @@ export default function AlarmSetupScreen() {
           style={styles.cta}
         />
       </ScrollView>
+
+      <Modal
+        visible={showRingtonePicker}
+        animationType="slide"
+        transparent
+        onRequestClose={() => {
+          RingtoneModule.stopPreview().catch(() => {});
+          setShowRingtonePicker(false);
+        }}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHeader}>
+              <VoltageText variant="h4">SELECT RINGTONE</VoltageText>
+              <TouchableOpacity onPress={() => {
+                RingtoneModule.stopPreview().catch(() => {});
+                setShowRingtonePicker(false);
+              }}>
+                <VoltageText variant="label" color={Colors.textMuted}>CLOSE</VoltageText>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.ringtoneItem, !selectedRingtone && styles.ringtoneItemActive]}
+              onPress={() => { RingtoneModule.stopPreview().catch(() => {}); setSelectedRingtone(null); setShowRingtonePicker(false); }}
+            >
+              <VoltageText variant="body" color={!selectedRingtone ? Colors.heat : Colors.textPrimary} style={{ flex: 1 }}>
+                System Default
+              </VoltageText>
+            </TouchableOpacity>
+
+            <FlatList
+              data={ringtones}
+              keyExtractor={(item) => item.uri}
+              renderItem={({ item }) => {
+                const active = selectedRingtone?.uri === item.uri;
+                const playing = playingUri === item.uri;
+                return (
+                  <TouchableOpacity
+                    style={[styles.ringtoneItem, active && styles.ringtoneItemActive]}
+                    onPress={() => handleRingtoneSelect(item)}
+                    activeOpacity={0.7}
+                  >
+                    <VoltageText variant="body" color={active ? Colors.heat : Colors.textPrimary} style={{ flex: 1 }}>
+                      {item.title}
+                    </VoltageText>
+                    <TouchableOpacity
+                      onPress={(e) => { e.stopPropagation(); handleRingtonePreview(item); }}
+                      style={styles.playBtn}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <VoltageText variant="label" color={playing ? Colors.heat : Colors.textMuted}>
+                        {playing ? '■' : '▶'}
+                      </VoltageText>
+                    </TouchableOpacity>
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -211,6 +391,17 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: Spacing.sm,
   },
+  ringtoneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Colors.surface,
+    padding: Spacing.md,
+  },
+  ringtoneName: {
+    flex: 1,
+    marginRight: Spacing.sm,
+  },
   input: {
     backgroundColor: Colors.surface,
     color: Colors.textPrimary,
@@ -225,5 +416,37 @@ const styles = StyleSheet.create({
   },
   cta: {
     marginTop: Spacing.md,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    backgroundColor: Colors.surface,
+    maxHeight: '60%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.surfaceMuted,
+  },
+  ringtoneItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.surfaceMuted,
+  },
+  ringtoneItemActive: {
+    backgroundColor: Colors.surfaceMuted,
+  },
+  playBtn: {
+    paddingHorizontal: Spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
