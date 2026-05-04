@@ -1,52 +1,52 @@
+import { VoltageButton } from '@/components/VoltageButton';
+import { VoltageText } from '@/components/VoltageText';
+import { Colors } from '@/constants/colors';
+import { Spacing } from '@/constants/layout';
+import {
+  DEFAULT_COLOR_TOLERANCE,
+  DEFAULT_VOICE_THRESHOLD,
+  TASK_TYPES,
+  getRandomVoicePhrase,
+} from '@/constants/missions';
+import { Fonts } from '@/constants/typography';
+import { useAlarms } from '@/hooks/useAlarms';
+import { useKeyboard } from '@/hooks/useKeyboard';
+import { RingtoneInfo, RingtoneModule } from '@/native/RingtoneModule';
+import { useStore } from '@/store';
+import { RepeatDays } from '@/types/alarm.types';
+import { RootStackParamList } from '@/types/navigation.types';
+import { TaskType } from '@/types/task.types';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 import React, { useEffect, useState } from 'react';
 import {
-  View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Modal,
   ScrollView,
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  Alert,
-  Modal,
-  FlatList,
-  ActivityIndicator,
+  View,
 } from 'react-native';
+import { PERMISSIONS, RESULTS, check, openSettings, request } from 'react-native-permissions';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '@/types/navigation.types';
-import { RepeatDays } from '@/types/alarm.types';
-import { TaskType } from '@/types/task.types';
-import { Colors } from '@/constants/colors';
-import { Spacing } from '@/constants/layout';
-import { Fonts } from '@/constants/typography';
-import {
-  DEFAULT_VOICE_THRESHOLD,
-  DEFAULT_COLOR_TOLERANCE,
-  TASK_TYPES,
-  getRandomVoicePhrase,
-} from '@/constants/missions';
-import { VoltageText } from '@/components/VoltageText';
-import { VoltageButton } from '@/components/VoltageButton';
-import { TimePicker } from './components/TimePicker';
 import { DaySelector } from './components/DaySelector';
 import { TaskTypeCard } from './components/TaskTypeCard';
-import { useAlarms } from '@/hooks/useAlarms';
-import { useKeyboard } from '@/hooks/useKeyboard';
-import { useStore } from '@/store';
-import { RingtoneModule, RingtoneInfo } from '@/native/RingtoneModule';
-import { check, request, PERMISSIONS, RESULTS, openSettings } from 'react-native-permissions';
+import { TimePicker } from './components/TimePicker';
 
 const DEFAULT_REPEAT: RepeatDays = {
   monday: true, tuesday: true, wednesday: true,
-  thursday: true, friday: true, saturday: false, sunday: false,
+  thursday: true, friday: true, saturday: true, sunday: true,
 };
 
 // Maps task types that require a runtime permission
 const TASK_PERMISSION: Partial<Record<TaskType, { permission: any; label: string }>> = {
   steps: { permission: PERMISSIONS.ANDROID.ACTIVITY_RECOGNITION, label: 'Physical Activity' },
-  voice: { permission: PERMISSIONS.ANDROID.RECORD_AUDIO,          label: 'Microphone' },
-  photo: { permission: PERMISSIONS.ANDROID.CAMERA,                label: 'Camera' },
-  qr:    { permission: PERMISSIONS.ANDROID.CAMERA,                label: 'Camera' },
+  voice: { permission: PERMISSIONS.ANDROID.RECORD_AUDIO, label: 'Microphone' },
+  photo: { permission: PERMISSIONS.ANDROID.CAMERA, label: 'Camera' },
+  qr: { permission: PERMISSIONS.ANDROID.CAMERA, label: 'Camera' },
 };
 
 type Nav = StackNavigationProp<RootStackParamList>;
@@ -59,8 +59,8 @@ export default function AlarmSetupScreen() {
   const existing = useStore((s) => s.alarms.find((a) => a.id === alarmId));
   const { createAlarm, editAlarm } = useAlarms();
 
-  const [hour, setHour] = useState(existing?.hour ?? 6);
-  const [minute, setMinute] = useState(existing?.minute ?? 30);
+  const [hour, setHour] = useState(() => existing?.hour ?? new Date().getHours());
+  const [minute, setMinute] = useState(() => existing?.minute ?? new Date().getMinutes());
   const [repeatDays, setRepeatDays] = useState<RepeatDays>(existing?.repeatDays ?? DEFAULT_REPEAT);
   const [taskType, setTaskType] = useState<TaskType>(existing?.taskType ?? 'steps');
   const [label, setLabel] = useState(existing?.label ?? '');
@@ -76,6 +76,8 @@ export default function AlarmSetupScreen() {
   const [showRingtonePicker, setShowRingtonePicker] = useState(false);
   const [loadingRingtones, setLoadingRingtones] = useState(false);
   const [playingUri, setPlayingUri] = useState<string | null>(null);
+  const [tempSelectedRingtone, setTempSelectedRingtone] = useState<RingtoneInfo | null>(null);
+  const [isRingtoneModified, setIsRingtoneModified] = useState(false);
 
   // Check all permissions on mount
   useEffect(() => {
@@ -102,9 +104,11 @@ export default function AlarmSetupScreen() {
           if (match) setSelectedRingtone(match);
         }
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoadingRingtones(false));
   }, []);
+
+  const [permissionDialog, setPermissionDialog] = useState<{ label: string; permission: any; type: TaskType } | null>(null);
 
   // Called when user taps a task type card
   async function handleTaskTypePress(type: TaskType) {
@@ -124,15 +128,8 @@ export default function AlarmSetupScreen() {
       return;
     }
 
-    // Blocked or denied — offer settings link
-    Alert.alert(
-      'PERMISSION REQUIRED',
-      `${cfg.label} permission is needed for this mission. Enable it in device settings.`,
-      [
-        { text: 'CANCEL', style: 'cancel' },
-        { text: 'OPEN SETTINGS', onPress: () => openSettings() },
-      ]
-    );
+    // Blocked or denied — show custom dialog
+    setPermissionDialog({ label: cfg.label, permission: cfg.permission, type });
   }
 
   function buildTaskConfig() {
@@ -157,7 +154,7 @@ export default function AlarmSetupScreen() {
     try {
       const ringtoneUri = selectedRingtone?.uri ?? null;
       if (alarmId && existing) {
-        await editAlarm(alarmId, { hour, minute, repeatDays, taskType, taskConfig, label, isOneShot: !hasAnyDay, ringtoneUri });
+        await editAlarm(alarmId, { hour, minute, repeatDays, taskType, taskConfig, label, isOneShot: !hasAnyDay, ringtoneUri, status: 'active' });
       } else {
         await createAlarm({ hour, minute, repeatDays, taskType, taskConfig, label, isOneShot: !hasAnyDay, ringtoneUri });
       }
@@ -170,18 +167,38 @@ export default function AlarmSetupScreen() {
     }
   }
 
-  function handleRingtoneSelect(ringtone: RingtoneInfo) {
-    RingtoneModule.stopPreview().catch(() => {});
-    setSelectedRingtone(ringtone);
+  function handleRingtoneSelect(ringtone: RingtoneInfo | null) {
+    setTempSelectedRingtone(ringtone);
+    setIsRingtoneModified(true);
+    // Auto-play when clicked
+    if (ringtone) {
+      handleRingtonePreview(ringtone);
+    } else {
+      // For "System Default", stop preview
+      RingtoneModule.stopPreview().catch(() => { });
+      setPlayingUri(null);
+    }
+  }
+
+  function handleConfirmRingtone() {
+    RingtoneModule.stopPreview().catch(() => { });
+    setSelectedRingtone(tempSelectedRingtone);
     setShowRingtonePicker(false);
+    setIsRingtoneModified(false);
+  }
+
+  function handleCancelRingtone() {
+    RingtoneModule.stopPreview().catch(() => { });
+    setShowRingtonePicker(false);
+    setIsRingtoneModified(false);
   }
 
   function handleRingtonePreview(ringtone: RingtoneInfo) {
     if (playingUri === ringtone.uri) {
-      RingtoneModule.stopPreview().catch(() => {});
+      RingtoneModule.stopPreview().catch(() => { });
       setPlayingUri(null);
     } else {
-      RingtoneModule.stopPreview().catch(() => {});
+      RingtoneModule.stopPreview().catch(() => { });
       RingtoneModule.playPreview(ringtone.uri);
       setPlayingUri(ringtone.uri);
     }
@@ -190,10 +207,13 @@ export default function AlarmSetupScreen() {
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => {
-          RingtoneModule.stopPreview().catch(() => {});
-          navigation.goBack();
-        }}>
+        <TouchableOpacity
+          hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+          onPress={() => {
+            RingtoneModule.stopPreview().catch(() => { });
+            navigation.goBack();
+          }}
+        >
           <VoltageText variant="label" color={Colors.textMuted}>← BACK</VoltageText>
         </TouchableOpacity>
         <VoltageText variant="h4">
@@ -254,7 +274,11 @@ export default function AlarmSetupScreen() {
           </VoltageText>
           <TouchableOpacity
             style={styles.ringtoneRow}
-            onPress={() => setShowRingtonePicker(true)}
+            onPress={() => {
+              setTempSelectedRingtone(selectedRingtone);
+              setIsRingtoneModified(false);
+              setShowRingtonePicker(true);
+            }}
             activeOpacity={0.7}
           >
             <VoltageText variant="body" color={Colors.textPrimary} style={styles.ringtoneName}>
@@ -300,28 +324,19 @@ export default function AlarmSetupScreen() {
         visible={showRingtonePicker}
         animationType="slide"
         transparent
-        onRequestClose={() => {
-          RingtoneModule.stopPreview().catch(() => {});
-          setShowRingtonePicker(false);
-        }}
+        onRequestClose={handleCancelRingtone}
       >
         <View style={styles.modalBackdrop}>
           <View style={styles.modalSheet}>
             <View style={styles.modalHeader}>
               <VoltageText variant="h4">SELECT RINGTONE</VoltageText>
-              <TouchableOpacity onPress={() => {
-                RingtoneModule.stopPreview().catch(() => {});
-                setShowRingtonePicker(false);
-              }}>
-                <VoltageText variant="label" color={Colors.textMuted}>CLOSE</VoltageText>
-              </TouchableOpacity>
             </View>
 
             <TouchableOpacity
-              style={[styles.ringtoneItem, !selectedRingtone && styles.ringtoneItemActive]}
-              onPress={() => { RingtoneModule.stopPreview().catch(() => {}); setSelectedRingtone(null); setShowRingtonePicker(false); }}
+              style={[styles.ringtoneItem, !tempSelectedRingtone && styles.ringtoneItemActive]}
+              onPress={() => handleRingtoneSelect(null)}
             >
-              <VoltageText variant="body" color={!selectedRingtone ? Colors.heat : Colors.textPrimary} style={{ flex: 1 }}>
+              <VoltageText variant="body" color={!tempSelectedRingtone ? Colors.heat : Colors.textPrimary} style={{ flex: 1 }}>
                 System Default
               </VoltageText>
             </TouchableOpacity>
@@ -330,7 +345,7 @@ export default function AlarmSetupScreen() {
               data={ringtones}
               keyExtractor={(item) => item.uri}
               renderItem={({ item }) => {
-                const active = selectedRingtone?.uri === item.uri;
+                const active = tempSelectedRingtone?.uri === item.uri;
                 const playing = playingUri === item.uri;
                 return (
                   <TouchableOpacity
@@ -341,19 +356,64 @@ export default function AlarmSetupScreen() {
                     <VoltageText variant="body" color={active ? Colors.heat : Colors.textPrimary} style={{ flex: 1 }}>
                       {item.title}
                     </VoltageText>
-                    <TouchableOpacity
-                      onPress={(e) => { e.stopPropagation(); handleRingtonePreview(item); }}
-                      style={styles.playBtn}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    >
+                    <View style={styles.playBtn}>
                       <VoltageText variant="label" color={playing ? Colors.heat : Colors.textMuted}>
                         {playing ? '■' : '▶'}
                       </VoltageText>
-                    </TouchableOpacity>
+                    </View>
                   </TouchableOpacity>
                 );
               }}
             />
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity style={styles.modalBtn} onPress={handleCancelRingtone}>
+                <VoltageText variant="label" color={Colors.textMuted}>CANCEL</VoltageText>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.modalBtn, !isRingtoneModified && styles.btnDisabled]} 
+                onPress={handleConfirmRingtone}
+                disabled={!isRingtoneModified}
+              >
+                <VoltageText variant="label" color={isRingtoneModified ? Colors.heat : Colors.textMuted}>SELECT</VoltageText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        visible={!!permissionDialog}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setPermissionDialog(null)}
+      >
+        <View style={styles.modalBackdropCenter}>
+          <View style={styles.dialogSheet}>
+            <View style={styles.dialogHeader}>
+              <VoltageText variant="h4">PERMISSION REQUIRED</VoltageText>
+            </View>
+            <View style={styles.dialogBody}>
+              <VoltageText variant="body" color={Colors.textSecondary}>
+                {permissionDialog?.label} permission is needed for this mission. Enable it in device settings.
+              </VoltageText>
+            </View>
+            <View style={styles.dialogFooter}>
+              <TouchableOpacity
+                style={styles.dialogBtn}
+                onPress={() => setPermissionDialog(null)}
+              >
+                <VoltageText variant="label" color={Colors.textMuted}>CANCEL</VoltageText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.dialogBtn}
+                onPress={() => {
+                  setPermissionDialog(null);
+                  openSettings();
+                }}
+              >
+                <VoltageText variant="label" color={Colors.heat}>OPEN SETTINGS</VoltageText>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -448,5 +508,48 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  modalBackdropCenter: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    padding: Spacing.xl,
+  },
+  dialogSheet: {
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.surfaceMuted,
+  },
+  dialogHeader: {
+    padding: Spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.surfaceMuted,
+  },
+  dialogBody: {
+    padding: Spacing.lg,
+  },
+  dialogFooter: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    padding: Spacing.md,
+    gap: Spacing.md,
+  },
+  dialogBtn: {
+    padding: Spacing.sm,
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    padding: Spacing.md,
+    gap: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: Colors.surfaceMuted,
+    backgroundColor: Colors.surface,
+  },
+  modalBtn: {
+    padding: Spacing.sm,
+  },
+  btnDisabled: {
+    opacity: 0.5,
   },
 });

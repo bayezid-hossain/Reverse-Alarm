@@ -25,6 +25,25 @@ class RingtoneModule(private val reactContext: ReactApplicationContext) :
             }
             val cursor = manager.cursor
             val result = Arguments.createArray()
+            // Add custom raw sounds
+            val customSounds = listOf(
+                "fire_alarm" to "Fire Alarm (High Pitch)",
+                "drunk_arpeggio" to "Drunk Arpeggio",
+                "industrial_sequence" to "Industrial Cinematic",
+                "siren" to "Emergency Siren",
+                "universfield_ringtone" to "High Pitched Ringtone"
+            )
+            val packageName = reactContext.packageName
+            for ((resName, label) in customSounds) {
+                val uri = "android.resource://$packageName/raw/$resName"
+                //android.util.Log.d("RingtoneModule", "Adding custom sound: title=$label, uri=$uri")
+                val map = Arguments.createMap().apply {
+                    putString("uri", uri)
+                    putString("title", "[Reverse] $label")
+                }
+                result.pushMap(map)
+            }
+
             while (cursor.moveToNext()) {
                 val uri = manager.getRingtoneUri(cursor.position).toString()
                 val title = cursor.getString(RingtoneManager.TITLE_COLUMN_INDEX)

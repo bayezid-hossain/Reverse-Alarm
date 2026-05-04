@@ -1,13 +1,13 @@
-import React from 'react';
+import { Colors } from '@/constants/colors';
+import { RootStackParamList } from '@/types/navigation.types';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { RootStackParamList } from '@/types/navigation.types';
-import { Colors } from '@/constants/colors';
+import React from 'react';
 import { navigationRef } from './navigationRef';
 
+import AlarmSetupScreen from '@/screens/alarm-setup/AlarmSetupScreen';
 import AppNavigator from './AppNavigator';
 import MissionNavigator from './MissionNavigator';
-import AlarmSetupScreen from '@/screens/alarm-setup/AlarmSetupScreen';
 
 const Stack = createStackNavigator<RootStackParamList>();
 

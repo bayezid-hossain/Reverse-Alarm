@@ -40,8 +40,10 @@ class AlarmBroadcastReceiver : BroadcastReceiver() {
         val isNormal = extras?.optBoolean("isNormal", false) ?: false
         val snoozeIntervalMinutes = extras?.optInt("snoozeIntervalMinutes", 5) ?: 5
         val maxSnoozeCount = extras?.optInt("maxSnoozeCount", 3) ?: 3
-        val ringtoneUri = extras?.optString("ringtoneUri", null)
+        val ringtoneUri = extras?.let { if (it.has("ringtoneUri") && !it.isNull("ringtoneUri")) it.getString("ringtoneUri") else null }
         val snoozeCount = prefs.getInt("snooze_count_$alarmId", 0)
+
+        //android.util.Log.d("AlarmReceiver", "handleAlarmFired: alarmId=$alarmId, extrasJson=$extrasJson, ringtoneUri=$ringtoneUri")
 
         val serviceIntent = Intent(context, AlarmForegroundService::class.java).apply {
             putExtra("alarmId", alarmId)

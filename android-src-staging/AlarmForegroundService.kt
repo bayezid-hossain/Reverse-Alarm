@@ -11,12 +11,17 @@ import android.database.ContentObserver
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.MediaPlayer
+import android.media.Ringtone
+import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.content.pm.ServiceInfo
 import android.provider.Settings
 import androidx.core.app.NotificationCompat
@@ -31,6 +36,7 @@ class AlarmForegroundService : Service() {
     }
 
     private var mediaPlayer: MediaPlayer? = null
+    private var ringtone: Ringtone? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private var currentAlarmId: String = ""
     private var volumeObserver: ContentObserver? = null
@@ -39,6 +45,8 @@ class AlarmForegroundService : Service() {
     private var maxSnoozeCount: Int = 3
     private var snoozeCount: Int = 0
     private var ringtoneUri: String? = null
+    private var currentlyPlayingUri: String? = null
+    private var vibrator: Vibrator? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -57,23 +65,34 @@ class AlarmForegroundService : Service() {
             return START_NOT_STICKY
         }
 
-        // START_STICKY restart with null intent — only continue if alarm is still active
-        if (intent == null) {
+        val alarmId = intent?.getStringExtra("alarmId") ?: run {
             val prefs = getSharedPreferences("ReverseAlarmPrefs", Context.MODE_PRIVATE)
-            val activeId = prefs.getString("triggered_alarm_id", null)
-            if (activeId.isNullOrEmpty()) {
-                stopSelf()
-                return START_NOT_STICKY
+            prefs.getString("triggered_alarm_id", null)
+        } ?: ""
+
+        currentAlarmId = alarmId
+
+        if (alarmId.isNotEmpty()) {
+            val prefs = getSharedPreferences("ReverseAlarmPrefs", Context.MODE_PRIVATE)
+            val extrasJson = prefs.getString("alarm_extras_$alarmId", null)
+            val extras = extrasJson?.let { org.json.JSONObject(it) }
+            
+            if (extras != null) {
+                isNormal = extras.optBoolean("isNormal", false)
+                snoozeIntervalMinutes = extras.optInt("snoozeIntervalMinutes", 5)
+                maxSnoozeCount = extras.optInt("maxSnoozeCount", 3)
+                ringtoneUri = if (extras.has("ringtoneUri") && !extras.isNull("ringtoneUri")) extras.getString("ringtoneUri") else null
+            } else {
+                // Fallback to intent extras if SharedPreferences are missing for some reason
+                isNormal = intent?.getBooleanExtra("isNormal", false) ?: false
+                snoozeIntervalMinutes = intent?.getIntExtra("snoozeIntervalMinutes", 5) ?: 5
+                maxSnoozeCount = intent?.getIntExtra("maxSnoozeCount", 3) ?: 3
+                ringtoneUri = intent?.getStringExtra("ringtoneUri")
             }
-            currentAlarmId = activeId
-        } else {
-            currentAlarmId = intent.getStringExtra("alarmId") ?: ""
-            isNormal = intent.getBooleanExtra("isNormal", false)
-            snoozeIntervalMinutes = intent.getIntExtra("snoozeIntervalMinutes", 5)
-            maxSnoozeCount = intent.getIntExtra("maxSnoozeCount", 3)
-            snoozeCount = intent.getIntExtra("snoozeCount", 0)
-            ringtoneUri = intent.getStringExtra("ringtoneUri")
+            snoozeCount = prefs.getInt("snooze_count_$alarmId", 0)
         }
+
+        //android.util.Log.d("AlarmService", "onStartCommand: alarmId=$currentAlarmId, ringtoneUri=$ringtoneUri")
 
         val label = if (intent != null) intent.getStringExtra("label") ?: "ALARM" else "ALARM"
 
@@ -101,41 +120,108 @@ class AlarmForegroundService : Service() {
     }
 
     private fun startAlarmAudio() {
-        try {
-            mediaPlayer?.stop()
-            mediaPlayer?.release()
+        // Guard against the literal string "null" that JSONObject.optString can produce
+        val safeRingtoneUri = ringtoneUri?.takeIf { it.isNotEmpty() && it != "null" }
+        val targetUriStr = safeRingtoneUri ?: Settings.System.DEFAULT_ALARM_ALERT_URI.toString()
 
-            val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-            val maxVol = am.getStreamMaxVolume(AudioManager.STREAM_ALARM)
-            am.setStreamVolume(AudioManager.STREAM_ALARM, maxVol, 0)
-
-            mediaPlayer = MediaPlayer().apply {
-                setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_ALARM)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                        .build()
-                )
-                val uri = if (!ringtoneUri.isNullOrEmpty()) android.net.Uri.parse(ringtoneUri)
-                          else Settings.System.DEFAULT_ALARM_ALERT_URI
-                setDataSource(this@AlarmForegroundService, uri)
-                isLooping = true
-                prepare()
-                start()
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
+        if ((ringtone?.isPlaying == true || mediaPlayer?.isPlaying == true) && currentlyPlayingUri == targetUriStr) {
+            //android.util.Log.d("AlarmService", "startAlarmAudio: Already playing $targetUriStr, skipping restart")
+            return
         }
+
+        stopAlarmAudio()
+        currentlyPlayingUri = targetUriStr
+
+        val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        am.setStreamVolume(AudioManager.STREAM_ALARM, am.getStreamMaxVolume(AudioManager.STREAM_ALARM), 0)
+
+        val targetUri: Uri = Uri.parse(targetUriStr)
+
+        //android.util.Log.d("AlarmService", "startAlarmAudio: ringtoneUri=$ringtoneUri, safeUri=$safeRingtoneUri, targetUri=$targetUri")
+
+        val alarmAttrs = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_ALARM)
+            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+            .build()
+
+        // API 28+: Ringtone handles content:// URIs with proper permissions and supports looping
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            try {
+                //android.util.Log.d("AlarmService", "Attempting RingtoneManager with targetUri=$targetUri")
+                ringtone = RingtoneManager.getRingtone(this, targetUri)?.also { rt ->
+                    rt.audioAttributes = alarmAttrs
+                    rt.isLooping = true
+                    //android.util.Log.d("AlarmService", "Ringtone object created, calling play()")
+                    rt.play()
+                }
+                if (ringtone != null) {
+                    //android.util.Log.d("AlarmService", "Ringtone playback started successfully")
+                    startVibration()
+                    return
+                } else {
+                    //android.util.Log.d("AlarmService", "RingtoneManager returned null")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("AlarmService", "RingtoneManager failed: ${e.message}")
+                e.printStackTrace()
+            }
+        }
+
+        // API < 28 or Ringtone unavailable: use MediaPlayer, fallback to default if custom URI fails
+        fun tryMediaPlayer(uri: Uri): Boolean {
+            //android.util.Log.d("AlarmService", "Attempting MediaPlayer with uri=$uri")
+            return try {
+                mediaPlayer = MediaPlayer().apply {
+                    setAudioAttributes(alarmAttrs)
+                    setDataSource(this@AlarmForegroundService, uri)
+                    isLooping = true
+                    prepare()
+                    start()
+                }
+                //android.util.Log.d("AlarmService", "MediaPlayer started successfully")
+                true
+            } catch (e: Exception) {
+                android.util.Log.e("AlarmService", "MediaPlayer failed for $uri: ${e.message}")
+                e.printStackTrace()
+                mediaPlayer?.release()
+                mediaPlayer = null
+                false
+            }
+        }
+
+        val played = tryMediaPlayer(targetUri)
+        if (!played && !ringtoneUri.isNullOrEmpty()) {
+            //android.util.Log.d("AlarmService", "Custom URI failed, falling back to system default")
+            tryMediaPlayer(Settings.System.DEFAULT_ALARM_ALERT_URI)
+        }
+
+        startVibration()
+    }
+
+    private fun startVibration() {
+        try {
+            val vibratorService = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                (getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
+            } else {
+                @Suppress("DEPRECATION")
+                getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            }
+            vibrator = vibratorService
+            val pattern = longArrayOf(0, 1000, 1000)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator?.vibrate(VibrationEffect.createWaveform(pattern, 0))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(pattern, 0)
+            }
+        } catch (_: Exception) {}
     }
 
     private fun stopAlarmAudio() {
-        try {
-            mediaPlayer?.stop()
-            mediaPlayer?.release()
-            mediaPlayer = null
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+        currentlyPlayingUri = null
+        try { ringtone?.stop(); ringtone = null } catch (_: Exception) {}
+        try { mediaPlayer?.stop(); mediaPlayer?.release(); mediaPlayer = null } catch (_: Exception) {}
+        try { vibrator?.cancel(); vibrator = null } catch (_: Exception) {}
     }
 
     private fun registerVolumeObserver() {
@@ -256,8 +342,10 @@ class AlarmForegroundService : Service() {
                 description = "Active alarm notifications"
                 setBypassDnd(true)
                 lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+                setSound(null, null) // Disable channel sound to use custom player
             }
             val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            //android.util.Log.d("AlarmService", "Creating/Updating notification channel with sound=null")
             nm.createNotificationChannel(channel)
         }
     }

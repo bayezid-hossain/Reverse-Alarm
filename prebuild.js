@@ -63,8 +63,24 @@ function ensurePrebuild() {
     if (fs.existsSync(stagingDir)) {
         console.log(`Syncing android-src-staging → ${path.relative(__dirname, javaBaseDir)}...`);
         try {
-            copyRecursiveSync(stagingDir, javaBaseDir);
-            console.log('Kotlin sources synced.');
+            // Copy Kotlin files (non-recursive to avoid res/ getting copied into java path)
+            fs.readdirSync(stagingDir).forEach(file => {
+                const src = path.join(stagingDir, file);
+                const dest = path.join(javaBaseDir, file);
+                if (fs.statSync(src).isFile()) {
+                    fs.copyFileSync(src, dest);
+                }
+            });
+
+            // Copy res/ folder if it exists
+            const stagingResDir = path.join(stagingDir, 'res');
+            const targetResDir = path.join(__dirname, 'android', 'app', 'src', 'main', 'res');
+            if (fs.existsSync(stagingResDir)) {
+                console.log(`Syncing res → ${path.relative(__dirname, targetResDir)}...`);
+                copyRecursiveSync(stagingResDir, targetResDir);
+            }
+            
+            console.log('Native sources and resources synced.');
         } catch (err) {
             console.error(`Failed to sync sources: ${err.message}`);
         }

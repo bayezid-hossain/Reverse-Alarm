@@ -94,15 +94,15 @@ export default function AppConfigScreen() {
         </VoltageText>
         <VoltageCard>
           <SettingRow
-            label="Walking Goal"
-            sublabel="Distance for Kinetic Lock"
+            label="Step Goal"
+            sublabel="Steps required for Kinetic Lock"
             right={
               <View style={styles.segmentContainer}>
                 {[
-                  { l: '10m', v: 15 },
-                  { l: '30m', v: 45 },
-                  { l: '50m', v: 75 },
-                  { l: '100m', v: 150 },
+                  { l: '15', v: 15 },
+                  { l: '45', v: 45 },
+                  { l: '75', v: 75 },
+                  { l: '150', v: 150 },
                 ].map((opt) => (
                   <TouchableOpacity
                     key={opt.l}

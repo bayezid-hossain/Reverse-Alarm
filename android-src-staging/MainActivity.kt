@@ -13,10 +13,6 @@ import expo.modules.ReactActivityDelegateWrapper
 
 class MainActivity : ReactActivity() {
 
-    companion object {
-        var isAlarmLocked = false
-    }
-
     override fun getMainComponentName(): String = "main"
 
     override fun createReactActivityDelegate(): ReactActivityDelegate =
@@ -39,7 +35,6 @@ class MainActivity : ReactActivity() {
 
     private fun handleAlarmIntent(intent: Intent?) {
         val alarmId = intent?.getStringExtra("alarmId") ?: return
-        isAlarmLocked = true
 
         // Wake screen
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O_MR1) {
@@ -92,7 +87,9 @@ class MainActivity : ReactActivity() {
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        if (isAlarmLocked) return
+        // Block back while alarm is actively ringing (check live state, not stale boolean)
+        val prefs = getSharedPreferences("ReverseAlarmPrefs", android.content.Context.MODE_PRIVATE)
+        if (!prefs.getString("triggered_alarm_id", null).isNullOrEmpty()) return
         @Suppress("DEPRECATION")
         super.onBackPressed()
     }

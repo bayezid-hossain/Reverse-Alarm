@@ -32,6 +32,8 @@ class AlarmModule(private val reactContext: ReactApplicationContext) :
             val maxSnoozeCount = if (params.hasKey("maxSnoozeCount")) params.getInt("maxSnoozeCount") else 3
             val ringtoneUri = if (params.hasKey("ringtoneUri")) params.getString("ringtoneUri") else null
 
+            //android.util.Log.d("AlarmModule", "scheduleAlarm: alarmId=$alarmId, ringtoneUri=$ringtoneUri")
+
             // Persist alarm config extras for use by receiver/service
             saveAlarmExtras(alarmId, isNormal, snoozeIntervalMinutes, maxSnoozeCount, ringtoneUri)
             // Reset snooze count on fresh schedule
@@ -172,6 +174,7 @@ class AlarmModule(private val reactContext: ReactApplicationContext) :
             put("maxSnoozeCount", maxSnoozeCount)
             if (!ringtoneUri.isNullOrEmpty()) put("ringtoneUri", ringtoneUri)
         }
+        //android.util.Log.d("AlarmModule", "saveAlarmExtras: alarmId=$alarmId, json=$json")
         getPrefs().edit().putString("alarm_extras_$alarmId", json.toString()).apply()
     }
 

@@ -21,14 +21,15 @@ type Route = RouteProp<MissionStackParamList, 'StepMission'>;
 export default function StepMissionScreen() {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
-  const { taskConfig, alarmId } = route.params;
+  const { alarmId } = route.params;
   const { stepCount, startCounting, stopCounting } = useStepCounter();
   const missionStartedAt = useStore((s) => s.missionStartedAt);
   const taskAttempts = useStore((s) => s.taskAttempts);
   const incrementAttempts = useStore((s) => s.incrementAttempts);
+  const targetSteps = useStore((s) => s.config.defaultStepTarget);
   const [showSwitch, setShowSwitch] = useState(false);
 
-  const progress = Math.min(stepCount / taskConfig.targetSteps, 1);
+  const progress = Math.min(stepCount / targetSteps, 1);
 
   useEffect(() => {
     startCounting();
@@ -42,7 +43,7 @@ export default function StepMissionScreen() {
   }, []);
 
   useEffect(() => {
-    if (stepCount >= taskConfig.targetSteps) {
+    if (stepCount >= targetSteps) {
       stopCounting();
       const result = buildMissionResult(alarmId, 'steps', {
         timeToWakeMs: Date.now() - (missionStartedAt ?? Date.now()),
@@ -52,7 +53,7 @@ export default function StepMissionScreen() {
       });
       navigation.replace('MissionSuccess', { result });
     }
-  }, [stepCount, taskConfig.targetSteps]);
+  }, [stepCount, targetSteps]);
 
   function switchMission(type: keyof typeof DEFAULT_TASK_CONFIGS) {
     if (type === 'steps') return;
@@ -83,13 +84,13 @@ export default function StepMissionScreen() {
       </VoltageText>
 
       <View style={styles.counterBlock}>
-        <StepCounter current={stepCount} target={taskConfig.targetSteps} />
+        <StepCounter current={stepCount} target={targetSteps} />
       </View>
 
       <View style={styles.progressBlock}>
         <SegmentedProgressBar progress={progress} segments={14} color={Colors.warning} />
         <VoltageText variant="caption" color={Colors.textMuted} style={styles.progressLabel}>
-          {Math.round(progress * 100)}% — {stepCount}/{taskConfig.targetSteps} STEPS
+          {Math.round(progress * 100)}% — {stepCount}/{targetSteps} STEPS
         </VoltageText>
       </View>
 
