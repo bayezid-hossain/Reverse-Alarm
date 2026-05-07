@@ -144,8 +144,10 @@ class AlarmForegroundService : Service() {
             .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
             .build()
 
-        // API 28+: Ringtone handles content:// URIs with proper permissions and supports looping
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        // API 28+: Ringtone handles content:// URIs with proper permissions and supports looping.
+        // Skip for android.resource:// — RingtoneManager cannot play raw app resources reliably.
+        val isRawResource = targetUri.scheme == "android.resource"
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && !isRawResource) {
             try {
                 //android.util.Log.d("AlarmService", "Attempting RingtoneManager with targetUri=$targetUri")
                 ringtone = RingtoneManager.getRingtone(this, targetUri)?.also { rt ->
