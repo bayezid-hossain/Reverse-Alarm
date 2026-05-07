@@ -65,6 +65,7 @@ class RingtoneModule(private val reactContext: ReactApplicationContext) :
         mainHandler.post {
             try {
                 stopPlayer()
+                val parsedUri = Uri.parse(uri)
                 previewPlayer = MediaPlayer().apply {
                     setAudioAttributes(
                         AudioAttributes.Builder()
@@ -72,7 +73,23 @@ class RingtoneModule(private val reactContext: ReactApplicationContext) :
                             .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                             .build()
                     )
-                    setDataSource(reactContext, Uri.parse(uri))
+                    
+                    if (parsedUri.scheme == "android.resource") {
+                        val resName = parsedUri.lastPathSegment
+                        val resId = if (resName != null) {
+                            reactContext.resources.getIdentifier(resName, "raw", reactContext.packageName)
+                        } else 0
+                        if (resId > 0) {
+                            val afd = reactContext.resources.openRawResourceFd(resId)
+                            setDataSource(afd.fileDescriptor, afd.startOffset, afd.declaredLength)
+                            afd.close()
+                        } else {
+                            setDataSource(reactContext, parsedUri)
+                        }
+                    } else {
+                        setDataSource(reactContext, parsedUri)
+                    }
+                    
                     isLooping = false
                     prepare()
                     start()

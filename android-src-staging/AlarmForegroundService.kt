@@ -147,6 +147,30 @@ class AlarmForegroundService : Service() {
         // API 28+: Ringtone handles content:// URIs with proper permissions and supports looping.
         // Skip for android.resource:// — RingtoneManager cannot play raw app resources reliably.
         val isRawResource = targetUri.scheme == "android.resource"
+        
+        if (isRawResource) {
+            val resName = targetUri.lastPathSegment
+            val resId = if (resName != null) resources.getIdentifier(resName, "raw", packageName) else 0
+            if (resId > 0) {
+                try {
+                    val afd = resources.openRawResourceFd(resId)
+                    mediaPlayer = MediaPlayer().apply {
+                        setAudioAttributes(alarmAttrs)
+                        setDataSource(afd.fileDescriptor, afd.startOffset, afd.declaredLength)
+                        isLooping = true
+                        prepare()
+                        start()
+                    }
+                    afd.close()
+                    startVibration()
+                    return
+                } catch (e: Exception) {
+                    android.util.Log.e("AlarmService", "MediaPlayer with Raw FD failed: ${e.message}")
+                    e.printStackTrace()
+                }
+            }
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && !isRawResource) {
             try {
                 //android.util.Log.d("AlarmService", "Attempting RingtoneManager with targetUri=$targetUri")
